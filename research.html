@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Research | Melodie Infosec</title>
+
+    <!-- AOS Styles -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="./style.css" />
+
+    <!-- Google Fonts: Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;900&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <!-- Custom Cursor -->
+    <div class="cursor"></div>
+    <div class="cursor-follower"></div>
+    <div class="vignette"></div>
+
+    <nav>
+        <div class="nav-links">
+            <a href="/">MAIN</a>
+            <span class="separator">/</span>
+            <a href="/research.html" class="active">RESEARCH</a>
+            <span class="separator">/</span>
+            <a href="/writeups.html">WRITEUPS</a>
+            <span class="separator">/</span>
+            <a href="/#contact">CONTACT</a>
+        </div>
+    </nav>
+
+    <main class="content-page">
+        <section class="section-highlights" data-aos="fade-down">
+            <div class="section-header">
+                <h2>Research Papers</h2>
+                <p style="color: var(--text-gray); margin-top: 0.5rem;">Advanced persistency techniques and red team
+                    methodology.</p>
+            </div>
+
+            <div class="grid-container">
+                <article class="card" onclick="window.location.href='/osint-ia.html'" style="cursor: pointer;">
+                    <p class="date">DEC 2024</p>
+                    <h3>OSINT Automatizado con IA</h3>
+                    <p class="desc">Técnica muy utilizada por hackers como acceso inicial para algunos sistemas o para
+                        labores de inteligencia.</p>
+                </article>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer>
+            <div class="footer-content">
+                <img src="./logo.png" alt="Logo" class="footer-logo">
+                <p class="copyright">&copy; 2024-2025 MELODIE INFOSEC. ALL RIGHTS RESERVED.</p>
+            </div>
+        </footer>
+    </main>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init();
+    </script>
+    <script type="module" src="/main.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Writeups | Melodie Infosec</title>
+
+    <!-- AOS Styles -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="./style.css" />
+
+    <!-- Google Fonts: Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;900&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <!-- Custom Cursor -->
+    <div class="cursor"></div>
+    <div class="cursor-follower"></div>
+    <div class="vignette"></div>
+
+    <nav>
+        <div class="nav-links">
+            <a href="/">MAIN</a>
+            <span class="separator">/</span>
+            <a href="/research.html">RESEARCH</a>
+            <span class="separator">/</span>
+            <a href="/writeups.html" class="active">WRITEUPS</a>
+            <span class="separator">/</span>
+            <a href="/#contact">CONTACT</a>
+        </div>
+    </nav>
+
+    <main class="content-page">
+        <section class="section-highlights" data-aos="fade-down">
+            <div class="section-header">
+                <h2>Writeups</h2>
+                <p style="color: var(--text-gray); margin-top: 0.5rem;">HackTheBox, TryHackMe, and CTF challenges.</p>
+            </div>
+
+            <div class="grid-container">
+                <article class="card">
+                    <p class="date">OCT 2024</p>
+                    <h3>HTB: Analytics</h3>
+                    <p class="desc">Detailed walkthrough of the Analytics machine (Hard).</p>
+                </article>
+                <article class="card">
+                    <p class="date">SEP 2024</p>
+                    <h3>HTB: Usage</h3>
+                    <p class="desc">Exploiting blind SQL injection in a monitoring dashboard.</p>
+                </article>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer>
+            <div class="footer-content">
+                <img src="./logo.png" alt="Logo" class="footer-logo">
+                <p class="copyright">&copy; 2024-2025 MELODIE INFOSEC. ALL RIGHTS RESERVED.</p>
+            </div>
+        </footer>
+    </main>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init();
+    </script>
+    <script type="module" src="/main.js"></script>
+</body>
+
+</html>

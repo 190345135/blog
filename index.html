@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/logo.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Melodie Infosec | Red Team & Research</title>
+
+  <!-- AOS Styles -->
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css" />
+
+  <!-- Google Fonts: Poppins (Industrial/Heavy feel) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;900&display=swap" rel="stylesheet">
+</head>
+
+<body>
+  <!-- Loading Screen -->
+  <div class="loading-screen" id="loadingScreen">
+    <div class="loading-content">
+      <img src="./logo.png" alt="Logo" class="loading-logo">
+      <div class="loading-text-container">
+        <div class="loading-line"><span class="word-red">MELODIE</span> <span class="word-white">INFOSEC</span></div>
+        <div class="loading-line"><span class="word-dim">RED TEAM OPS</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Cursor -->
+  <div class="cursor"></div>
+  <div class="cursor-follower"></div>
+
+  <!-- Vignette -->
+  <div class="vignette"></div>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-links">
+      <a href="/" class="active">MAIN</a>
+      <span class="separator">/</span>
+      <a href="/research.html">RESEARCH</a>
+      <span class="separator">/</span>
+      <a href="/writeups.html">WRITEUPS</a>
+      <span class="separator">/</span>
+      <a href="#contact">CONTACT</a>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <main>
+    <section class="hero">
+      <div id="pixel-blast-container"></div>
+
+      <div class="hero-content" data-aos="fade-right" data-aos-duration="1000">
+        <h1 class="hero-title" style="display: flex; flex-direction: column; align-items: flex-start;">
+          <span id="text-type-line1"></span>
+          <span><span id="text-type-line2"></span><span class="cursor-blink">|</span></span>
+        </h1>
+        <p class="hero-subtitle">ADVANCED PERSISTENCE & EXPLOIT DEVELOPMENT</p>
+      </div>
+    </section>
+
+    <!-- Research Highlights (Styled minimally) -->
+    <section class="section-highlights" data-aos="fade-up">
+      <div class="section-header">
+        <h2>LATEST RESEARCH</h2>
+      </div>
+      <div class="grid-container">
+        <article class="card" onclick="window.location.href='/osint-ia.html'" style="cursor: pointer;">
+          <p class="date">DEC 2024</p>
+          <h3>OSINT Automatizado con IA</h3>
+          <p class="desc">Técnica muy utilizada por hackers como acceso inicial para algunos sistemas o para labores de
+            inteligencia.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="section-highlights" data-aos="fade-up">
+      <div class="section-header">
+        <h2>CONTACT</h2>
+      </div>
+      <div style="color: var(--text-gray); font-size: 1rem; line-height: 1.8;">
+        <p>Email: <a href="mailto:melodieapt@vault7.lat"
+            style="color: var(--accent-red); text-decoration: none;">melodieapt@vault7.lat</a></p>
+        <p>Session ID: <span
+            style="font-family: monospace; word-break: break-all; color: var(--text-white);">05c4a9e1f2b7d8a6c0e3b9f5d1a4e8c7b2f0d9a6e5c1b3f8d4a7e2c9b6</span>
+        </p>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <div class="footer-content">
+        <img src="./logo.png" alt="Logo" class="footer-logo">
+        <p class="copyright">&copy; 2024-2025 MELODIE INFOSEC. ALL RIGHTS RESERVED.</p>
+      </div>
+    </footer>
+  </main>
+
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script>
+    AOS.init();
+  </script>
+  <script type="module" src="/main.js"></script>
+</body>
+
+</html>

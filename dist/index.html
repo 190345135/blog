@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Melodie Infosec | Red Team & Research</title>
+  <!-- AOS Styles -->
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script type="module" crossorigin src="/assets/index-DSqO3z-s.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-CDEEYxvu.css">
+</head>
+
+<body>
+  <!-- Custom Cursor -->
+  <div class="cursor"></div>
+  <div class="cursor-follower"></div>
+
+  <!-- Blue Glow Vignette -->
+  <div class="vignette"></div>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="logo">[ Melodie Infosec ]</div>
+    <div class="nav-links">
+      <a href="/" class="active">Main</a>
+      <a href="/research.html">Research</a>
+      <a href="/writeups.html">Writeups</a>
+      <a href="#contact">Contact</a>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <main>
+    <section class="hero">
+      <div class="hero-content" data-aos="fade-right">
+        <h1>Melodie Infosec</h1>
+        <h2>Red Team Operations <br>& Security Research</h2>
+        <p class="tagline">Exploit Development | CTF | Advanced Persistence</p>
+      </div>
+
+      <div class="hero-visual" data-aos="fade-left">
+        <!-- Binary Wheel Placeholder -->
+        <div class="binary-wheel" id="binaryWheel">
+          <!-- Content injected by JS -->
+        </div>
+        <div class="hero-image-container">
+          <!-- Placeholder for a persona image or graphic -->
+          <div class="glitch-box"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Research Highlights -->
+    <section class="section-highlights" data-aos="fade-up">
+      <div class="section-header">
+        <h2>Latest Research</h2>
+        <a href="/research.html" class="view-all">View All -></a>
+      </div>
+      <div class="grid-container">
+        <article class="card">
+          <h3>Process Injection in 2024</h3>
+          <p class="date">Dec 2024</p>
+          <p>Analysis of EDR evasion techniques using indirect syscalls.</p>
+        </article>
+        <article class="card">
+          <h3>Cobalt Strike Profile Dev</h3>
+          <p class="date">Nov 2024</p>
+          <p>Customizing Malleable C2 profiles to blend in with legitimate traffic.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- Writeups Highlights -->
+    <section class="section-highlights" data-aos="fade-up">
+      <div class="section-header">
+        <h2>Recent Writeups</h2>
+        <a href="/writeups.html" class="view-all">View All -></a>
+      </div>
+      <div class="grid-container">
+        <article class="card">
+          <h3>HTB: Analytics</h3>
+          <span class="tag">Hard</span>
+          <p>Detailed walkthrough of the Analytics machine.</p>
+        </article>
+        <article class="card">
+          <h3>HTB: Usage</h3>
+          <span class="tag">Medium</span>
+          <p>Exploiting blind SQL injection in a monitoring dashboard.</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="section-contact" data-aos="fade-up">
+      <div class="contact-grid">
+        <div class="contact-form-container">
+          <h2>Initialize Handshake</h2>
+          <form class="contact-form">
+            <div class="form-group">
+              <label>Identity</label>
+              <input type="text" placeholder="Your Name / Handle">
+            </div>
+            <div class="form-group">
+              <label>Transmission</label>
+              <textarea placeholder="Encrypted Message..."></textarea>
+            </div>
+            <button type="button">SEND SIGNAL</button>
+          </form>
+        </div>
+
+        <div class="pgp-container">
+          <h2>PGP Public Key</h2>
+          <div class="pgp-block">
+            -----BEGIN PGP PUBLIC KEY BLOCK-----
+            Version: OpenPGP.js v4.10.10
+            Comment: https://openpgpjs.org
+
+            xsBNBF/ ... [TRUNCATED FOR DESIGN] ...
+            ... 8923 4812 9012 ...
+            -----END PGP PUBLIC KEY BLOCK-----
+          </div>
+          <button class="copy-btn">Copy Key</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+</body>
+
+</html>

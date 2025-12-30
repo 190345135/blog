@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/logo.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OSINT Automatizado con IA | Melodie Infosec</title>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="./style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/simplelightbox/2.14.2/simple-lightbox.min.css" />
+    <style>
+        /* Override SimpleLightbox background to match dark theme */
+        .sl-wrapper {
+            background: #000000 !important;
+        }
+
+        .sl-overlay {
+            background: #000000 !important;
+            opacity: 0.95 !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="cursor"></div>
+    <div class="cursor-follower"></div>
+    <div class="vignette"></div>
+
+    <nav>
+        <div class="nav-links">
+            <a href="/">MAIN</a>
+            <span class="separator">/</span>
+            <a href="/research.html" class="active">RESEARCH</a>
+            <span class="separator">/</span>
+            <a href="/writeups.html">WRITEUPS</a>
+            <span class="separator">/</span>
+            <a href="/#contact">CONTACT</a>
+        </div>
+    </nav>
+
+    <main class="content-page"
+        style="padding-top: 100px; max-width: 800px; margin: 0 auto; padding-left: 20px; padding-right: 20px;">
+        <article class="article-content" data-aos="fade-up" style="color: var(--text-white);">
+            <h1
+                style="color: var(--accent-red); font-size: 3rem; font-weight: 900; margin-bottom: 2rem; line-height: 1.1;">
+                OSINT Automatizado con IA</h1>
+
+            <p style="margin-bottom: 1.5rem; color: var(--text-gray); font-size: 1.1rem;">Buenas! :) Hoy les comparto
+                una técnica muy utilizada por hackers como acceso inicial para algunos sistemas o para labores de
+                inteligencia de fuentes abiertas, espero les guste.</p>
+
+            <div style="margin: 2rem auto; width: 50px; height: 50px; display: flex; justify-content: center;">
+                <div class="tenor-gif-embed" data-postid="25283109" data-share-method="host" data-aspect-ratio="1"
+                    data-width="100%"><a href="https://tenor.com/view/samuelkadest-gif-25283109">Samuelkadest
+                        GIF</a>from <a href="https://tenor.com/search/samuelkadest-gifs">Samuelkadest GIFs</a></div>
+                <script type="text/javascript" async src="https://tenor.com/embed.js"></script>
+            </div>
+
+            <p style="margin-bottom: 1rem;">Un día navegando por la lista de los más buscados del USSS (Servicio Secreto
+                de los Estados Unidos), me encuentro con un caso interesante: <strong>Denis Gennadievich
+                    Kulkov</strong>, conocido en el bajo mundo con los aliases "Nordex", "Nordexin" y "Kreenjo". Este
+                wey era el cerebro detrás de las operaciones de "Try2check".</p>
+
+            <p style="margin-bottom: 1rem;">Lo que realmente me llamó la atención fue la recompensa: 10 millones de
+                dólares para quien proporcione información que lleve a su captura. Así que prendí un cigarro de la
+                mierda más buena que tengo y me puse a trabajar en este caso.</p>
+
+            <p style="margin-bottom: 1rem;">Existen servicios especializados donde puedes comprar acceso a stealer logs
+                y bases de datos comprometidas, como IntelX, pero hay un pequeño detalle: cuestan alrededor de 10,000
+                dólares. Obviamente, está muy fuera de nuestro presupuesto.</p>
+
+            <p style="margin-bottom: 1rem;">Pero siempre hay una manera de hacer las cosas, ¿no?</p>
+
+            <p style="margin-bottom: 1rem;">Recopilar información de este tipo es más sencillo de lo que parece. Con
+                simples google dorks puedes encontrar grupos de Telegram donde se comparte este tipo de data: "Joghood
+                Team", "Watercloud Logs", "Daisy Cloud", "Satanic Cloud", entre otros. Estos grupos operan en un área
+                gris bastante interesante, ya que técnicamente estamos recopilando información a través de OSINT (Open
+                Source Intelligence), lo cual deja en un terreno legalmente ambiguo la obtención de stealer logs y bases
+                de datos filtradas. No estamos hackeando nada, solo recopilando e INDEXANDO lo que ya está públicamente
+                disponible. ¿Legal? Depende de cómo lo uses. ¿Sirve? Un chingo.</p>
+
+            <p style="margin-bottom: 1rem;">Podríamos empezar buscando manualmente sus usernames y nombre completo uno
+                por uno en diferentes bases de datos pero eso tomaría UN CHINGO DE TIEMPO. Entonces pensé: ¿Y si una IA
+                hace un mejor trabajo que yo?</p>
+
+            <p style="margin-bottom: 1rem;">Para este experimento utilicé Gemini CLI, un agente de IA gratuito que puede
+                interactuar directamente con tu Linux. Hice un script rápido en Python integrando el agente Gemini CLI y
+                lo configuré para que pudiera usar y entender mis herramientas de búsqueda en bases de datos.</p>
+
+            <p style="margin-bottom: 1rem;">Después de eso, le asigné al agente una tarea simple: "Realiza una
+                investigación OSINT completa sobre Denis Gennadievich Kulkov y sus aliases."</p>
+
+            <p style="margin-bottom: 1rem;">El agente comenzó a trabajar de forma autónoma:</p>
+            <ol style="margin-left: 2rem; margin-bottom: 1rem; color: var(--text-gray);">
+                <li>Búsqueda cruzada de aliases en múltiples bases de datos filtradas</li>
+                <li>Correlación de información entre diferentes fuentes</li>
+                <li>Extracción de metadatos asociados a los usernames</li>
+                <li>Identificación de patrones de comportamiento digital</li>
+                <li>Mapeo de infraestructura relacionada con Try2check</li>
+            </ol>
+
+            <p style="margin-bottom: 1rem;">Y este es el tipo de información que obtuvimos:</p>
+
+            <div
+                style="margin: 2rem 0; display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                <img src="/Image/Imagen1.png" alt="OSINT Data 1"
+                    style="width: 100%; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px;">
+                <img src="/Image/Imagen2.png" alt="OSINT Data 2"
+                    style="width: 100%; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px;">
+                <img src="/Image/Imagen3.png" alt="OSINT Data 3"
+                    style="width: 100%; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px;">
+                <img src="/Image/Imagen4.png" alt="OSINT Data 4"
+                    style="width: 100%; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px;">
+            </div>
+
+            <p style="margin-bottom: 1rem;">Solamente a partir del contexto proporcionado con la información que aparece
+                públicamente en el poster del USSS —el username y nombre completo del objetivo— nuestra IA consiguió una
+                cantidad impresionante de información sensible: número de seguro social de la persona investigada,
+                vehículos registrados a su nombre incluyendo placas y números VIN, posibles familiares como madre o
+                esposa basándose en correlación de datos, y ubicaciones geográficas precisas extraídas de metadatos GPS
+                de aplicaciones de delivery vinculadas a cuentas comprometidas.</p>
+
+            <p style="margin-bottom: 1rem;">Todo esto a partir de tan solo un username y el nombre completo de la
+                persona. Ningún hackeo, ninguna vulnerabilidad explotada, solo OSINT automatizado procesando miles de
+                registros filtrados en cuestión de minutos.</p>
+
+            <p style="margin-bottom: 1rem;">Lo que acabamos de presenciar es el futuro del OSINT y las operaciones de
+                red team. La implementación de agentes de IA en nuestras tareas de pentesting y OSINT representa un
+                cambio de paradigma en productividad y eficacia.</p>
+
+            <p style="margin-bottom: 1rem;">Así es como se hace esto sin perder semanas. Los agentes de IA no reemplazan
+                al hacker, simplemente lo convierten en una versión mucho más eficiente y letal.</p>
+
+            <p style="margin-bottom: 2rem; font-style: italic; color: var(--text-gray);">Próximamente más artículos
+                interesantes de OSINT / Red Team.</p>
+            <p
+                style="margin-bottom: 4rem; font-weight: bold; color: var(--accent-red); font-size: 1.5rem; letter-spacing: 2px;">
+                1337 rlz!</p>
+
+        </article>
+
+        <footer>
+            <div class="footer-content">
+                <img src="./logo.png" alt="Logo" class="footer-logo">
+                <p class="copyright">&copy; 2024-2025 MELODIE INFOSEC. ALL RIGHTS RESERVED.</p>
+            </div>
+        </footer>
+    </main>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init();
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/simplelightbox/2.14.2/simple-lightbox.min.js"></script>
+    <script>
+        // Initialize SimpleLightbox for article images
+        document.addEventListener('DOMContentLoaded', function () {
+            const images = document.querySelectorAll('.article-content img');
+            images.forEach(img => {
+                const link = document.createElement('a');
+                link.href = img.src;
+                link.className = 'gallery-item';
+                img.parentNode.insertBefore(link, img);
+                link.appendChild(img);
+            });
+            new SimpleLightbox('.gallery-item', {
+                overlayOpacity: 0.9,
+                animationSpeed: 200,
+                closeText: '×'
+            });
+        });
+    </script>
+    <script type="module" src="/main.js"></script>
+</body>
+
+</html>
