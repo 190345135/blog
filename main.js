@@ -5,7 +5,6 @@ import 'aos/dist/aos.css'
 import PixelBlast from './pixel-blast.js'
 import TextType from './text-type.js'
 
-// Initialize AOS
 AOS.init({
     duration: 1000,
     easing: 'ease-out-quart',
@@ -13,15 +12,13 @@ AOS.init({
     offset: 50
 });
 
-// Custom Cursor Logic
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize PixelBlast (Red Accent)
     const pixelBlastContainer = document.getElementById('pixel-blast-container');
     if (pixelBlastContainer) {
         new PixelBlast(pixelBlastContainer, {
             variant: 'circle',
             pixelSize: 6,
-            color: '#640100', // Red Accent
+            color: '#640100',
             patternScale: 3,
             patternDensity: 1.2,
             pixelSizeJitter: 0.5,
@@ -39,34 +36,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Initialize TextType
-    // Initialize TextType
-    const textTarget1 = document.getElementById('text-type-line1');
-    const textTarget2 = document.getElementById('text-type-line2');
-    // const cursorTarget = document.querySelector('.cursor-blink'); // Unused in class but passed
-
-    if (textTarget1) {
-        new TextType(textTarget1, null, {
-            text: ["RED TEAM"],
-            typingSpeed: 50,
-            deletingSpeed: 30, // Irrelevant with loop false
-            pauseDuration: 1500,
-            loop: false
+    const textTarget = document.getElementById('text-type-line1');
+    if (textTarget) {
+        new TextType(textTarget, null, {
+            text: ["C2 DEVELOPMENT", "EDR EVASION", "OSINT AUTOMATION", "VULNERABILITY RESEARCH", "ADVERSARY EMULATION"],
+            typingSpeed: 60,
+            deletingSpeed: 40,
+            pauseDuration: 2000,
+            loop: true
         });
     }
 
-    if (textTarget2) {
-        new TextType(textTarget2, null, {
-            text: ["OPERATIONS"],
-            typingSpeed: 50,
-            deletingSpeed: 30,
-            pauseDuration: 1500,
-            loop: false,
-            startDelay: 1000 // Start after line 1 mostly finishes
-        });
-    }
-
-    // Cursor Logic
     const cursor = document.querySelector('.cursor');
     const follower = document.querySelector('.cursor-follower');
 
@@ -86,7 +66,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Hover effects
         const links = document.querySelectorAll('a, button');
         links.forEach(link => {
             link.addEventListener('mouseenter', () => {
@@ -108,7 +87,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Loading Screen Animation
 window.addEventListener('load', () => {
     const tl = gsap.timeline({
         onComplete: () => {
@@ -123,16 +101,14 @@ window.addEventListener('load', () => {
     const loadingScreen = document.getElementById('loadingScreen');
 
     if (loadingScreen) {
-        // Initial states
         gsap.set([loadingLogo, wordRed, wordWhite, wordDim], { autoAlpha: 0, y: 20 });
         gsap.set(loadingScreen, { y: "0%" });
 
-        // Animation Sequence
         tl.to(loadingLogo, { duration: 1, autoAlpha: 1, y: 0, ease: "power3.out" })
             .to(wordRed, { duration: 0.8, autoAlpha: 1, y: 0, ease: "back.out(1.7)" }, "-=0.5")
             .to(wordWhite, { duration: 0.8, autoAlpha: 1, y: 0, ease: "back.out(1.7)" }, "-=0.6")
             .to(wordDim, { duration: 0.8, autoAlpha: 1, y: 0, ease: "power2.out" }, "-=0.6")
-            .to({}, { duration: 0.5 }) // Pause
+            .to({}, { duration: 0.5 })
             .to(loadingScreen, { duration: 1.2, y: "-100%", ease: "power4.inOut" });
     }
 });

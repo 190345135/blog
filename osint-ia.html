@@ -3,9 +3,9 @@
 
 <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/logo.png" />
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OSINT Automatizado con IA | Melodie Infosec</title>
+    <title>AI-Automated OSINT: Intelligence Profiling at Scale | Offensive Security</title>
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <link rel="stylesheet" href="./style.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,17 +13,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;900&display=swap" rel="stylesheet">
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/simplelightbox/2.14.2/simple-lightbox.min.css" />
-    <style>
-        /* Override SimpleLightbox background to match dark theme */
-        .sl-wrapper {
-            background: #000000 !important;
-        }
-
-        .sl-overlay {
-            background: #000000 !important;
-            opacity: 0.95 !important;
-        }
-    </style>
 </head>
 
 <body>
@@ -45,109 +34,99 @@
 
     <main class="content-page"
         style="padding-top: 100px; max-width: 800px; margin: 0 auto; padding-left: 20px; padding-right: 20px;">
-        <article class="article-content" data-aos="fade-up" style="color: var(--text-white);">
-            <h1
-                style="color: var(--accent-red); font-size: 3rem; font-weight: 900; margin-bottom: 2rem; line-height: 1.1;">
-                OSINT Automatizado con IA</h1>
+        <article class="article-content" data-aos="fade-up">
+            <h1>AI-Automated OSINT: Intelligence Profiling from Leaked Data at Scale</h1>
+            <div class="article-meta">DECEMBER 2024 &mdash; OSINT / AI AUTOMATION / THREAT INTELLIGENCE</div>
 
-            <p style="margin-bottom: 1.5rem; color: var(--text-gray); font-size: 1.1rem;">Buenas! :) Hoy les comparto
-                una técnica muy utilizada por hackers como acceso inicial para algunos sistemas o para labores de
-                inteligencia de fuentes abiertas, espero les guste.</p>
+            <p>While reviewing the United States Secret Service's Most Wanted list, I came across an interesting case:
+                <strong>Denis Gennadievich Kulkov</strong>, known in underground forums as "Nordex", "Nordexin", and
+                "Kreenjo" &mdash; the operator behind Try2check, a bulk stolen credit card validation service. The USSS
+                had posted a <strong>$10 million reward</strong> for information leading to his capture.</p>
 
-            <div style="margin: 2rem auto; width: 50px; height: 50px; display: flex; justify-content: center;">
-                <div class="tenor-gif-embed" data-postid="25283109" data-share-method="host" data-aspect-ratio="1"
-                    data-width="100%"><a href="https://tenor.com/view/samuelkadest-gif-25283109">Samuelkadest
-                        GIF</a>from <a href="https://tenor.com/search/samuelkadest-gifs">Samuelkadest GIFs</a></div>
-                <script type="text/javascript" async src="https://tenor.com/embed.js"></script>
-            </div>
+            <p>I decided to use this as a test case for an automated OSINT methodology I had been developing.</p>
 
-            <p style="margin-bottom: 1rem;">Un día navegando por la lista de los más buscados del USSS (Servicio Secreto
-                de los Estados Unidos), me encuentro con un caso interesante: <strong>Denis Gennadievich
-                    Kulkov</strong>, conocido en el bajo mundo con los aliases "Nordex", "Nordexin" y "Kreenjo". Este
-                wey era el cerebro detrás de las operaciones de "Try2check".</p>
+            <h2>The Problem</h2>
 
-            <p style="margin-bottom: 1rem;">Lo que realmente me llamó la atención fue la recompensa: 10 millones de
-                dólares para quien proporcione información que lleve a su captura. Así que prendí un cigarro de la
-                mierda más buena que tengo y me puse a trabajar en este caso.</p>
+            <p>Manually searching a target's aliases across multiple leaked databases, stealer logs, and public records
+                is effective but painfully slow. A single investigation can take an analyst days of cross-referencing
+                across fragmented data sources. Each alias needs to be checked against dozens of breached datasets,
+                correlated with other identities, and validated for accuracy.</p>
 
-            <p style="margin-bottom: 1rem;">Existen servicios especializados donde puedes comprar acceso a stealer logs
-                y bases de datos comprometidas, como IntelX, pero hay un pequeño detalle: cuestan alrededor de 10,000
-                dólares. Obviamente, está muy fuera de nuestro presupuesto.</p>
+            <p>The question was straightforward: could an AI agent replicate an experienced analyst's workflow and
+                compress days of manual work into minutes?</p>
 
-            <p style="margin-bottom: 1rem;">Pero siempre hay una manera de hacer las cosas, ¿no?</p>
+            <h2>Data Sources</h2>
 
-            <p style="margin-bottom: 1rem;">Recopilar información de este tipo es más sencillo de lo que parece. Con
-                simples google dorks puedes encontrar grupos de Telegram donde se comparte este tipo de data: "Joghood
-                Team", "Watercloud Logs", "Daisy Cloud", "Satanic Cloud", entre otros. Estos grupos operan en un área
-                gris bastante interesante, ya que técnicamente estamos recopilando información a través de OSINT (Open
-                Source Intelligence), lo cual deja en un terreno legalmente ambiguo la obtención de stealer logs y bases
-                de datos filtradas. No estamos hackeando nada, solo recopilando e INDEXANDO lo que ya está públicamente
-                disponible. ¿Legal? Depende de cómo lo uses. ¿Sirve? Un chingo.</p>
+            <p>Specialized services like IntelX provide access to indexed stealer logs and breached databases, but
+                access costs upward of $10,000. However, equivalent raw data is freely accessible through OSINT
+                collection &mdash; Telegram groups distributing credential dumps (Joghood Team, Watercloud Logs, Daisy
+                Cloud, Satanic Cloud, among others), publicly indexed breach repositories, and stealer log
+                aggregators.</p>
 
-            <p style="margin-bottom: 1rem;">Podríamos empezar buscando manualmente sus usernames y nombre completo uno
-                por uno en diferentes bases de datos pero eso tomaría UN CHINGO DE TIEMPO. Entonces pensé: ¿Y si una IA
-                hace un mejor trabajo que yo?</p>
+            <p>No exploitation is involved in this methodology. This is pure collection and indexing of already-public
+                material &mdash; the legal and ethical implications depend entirely on how the resulting intelligence is
+                applied.</p>
 
-            <p style="margin-bottom: 1rem;">Para este experimento utilicé Gemini CLI, un agente de IA gratuito que puede
-                interactuar directamente con tu Linux. Hice un script rápido en Python integrando el agente Gemini CLI y
-                lo configuré para que pudiera usar y entender mis herramientas de búsqueda en bases de datos.</p>
+            <h2>The Pipeline</h2>
 
-            <p style="margin-bottom: 1rem;">Después de eso, le asigné al agente una tarea simple: "Realiza una
-                investigación OSINT completa sobre Denis Gennadievich Kulkov y sus aliases."</p>
+            <p>I built a pipeline integrating an AI agent with custom search tools I had developed for querying indexed
+                breach data and stealer logs. The agent received a single directive: <strong>"Conduct a complete OSINT
+                    investigation on Denis Gennadievich Kulkov and his known aliases."</strong></p>
 
-            <p style="margin-bottom: 1rem;">El agente comenzó a trabajar de forma autónoma:</p>
-            <ol style="margin-left: 2rem; margin-bottom: 1rem; color: var(--text-gray);">
-                <li>Búsqueda cruzada de aliases en múltiples bases de datos filtradas</li>
-                <li>Correlación de información entre diferentes fuentes</li>
-                <li>Extracción de metadatos asociados a los usernames</li>
-                <li>Identificación de patrones de comportamiento digital</li>
-                <li>Mapeo de infraestructura relacionada con Try2check</li>
+            <p>Working autonomously, the agent executed the following workflow:</p>
+
+            <ol>
+                <li>Cross-referenced all known aliases across multiple breached databases</li>
+                <li>Correlated overlapping records between different data sources to identify linked identities</li>
+                <li>Extracted metadata associated with matched accounts &mdash; registration dates, IP addresses, device
+                    fingerprints</li>
+                <li>Identified behavioral patterns and digital footprint signatures across platforms</li>
+                <li>Mapped infrastructure elements connected to the Try2check operation</li>
             </ol>
 
-            <p style="margin-bottom: 1rem;">Y este es el tipo de información que obtuvimos:</p>
+            <h2>Results</h2>
 
-            <div
-                style="margin: 2rem 0; display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
-                <img src="/Image/Imagen1.png" alt="OSINT Data 1"
-                    style="width: 100%; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px;">
-                <img src="/Image/Imagen2.png" alt="OSINT Data 2"
-                    style="width: 100%; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px;">
-                <img src="/Image/Imagen3.png" alt="OSINT Data 3"
-                    style="width: 100%; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px;">
-                <img src="/Image/Imagen4.png" alt="OSINT Data 4"
-                    style="width: 100%; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px;">
+            <p>From nothing more than a name and a set of usernames &mdash; all publicly available on the USSS wanted
+                poster &mdash; the automated pipeline produced:</p>
+
+            <ul>
+                <li>Social security number</li>
+                <li>Registered vehicles including license plates and VIN numbers</li>
+                <li>Probable family members identified through cross-source data correlation</li>
+                <li>Precise geographic locations extracted from GPS metadata embedded in delivery application accounts
+                    linked to compromised credentials</li>
+            </ul>
+
+            <div class="article-image-grid">
+                <img src="/Image/Imagen1.png" alt="Intelligence correlation output — identity records">
+                <img src="/Image/Imagen2.png" alt="Cross-reference results — vehicle registrations">
+                <img src="/Image/Imagen3.png" alt="Behavioral pattern analysis — platform activity">
+                <img src="/Image/Imagen4.png" alt="Geolocation data — delivery app metadata extraction">
             </div>
 
-            <p style="margin-bottom: 1rem;">Solamente a partir del contexto proporcionado con la información que aparece
-                públicamente en el poster del USSS —el username y nombre completo del objetivo— nuestra IA consiguió una
-                cantidad impresionante de información sensible: número de seguro social de la persona investigada,
-                vehículos registrados a su nombre incluyendo placas y números VIN, posibles familiares como madre o
-                esposa basándose en correlación de datos, y ubicaciones geográficas precisas extraídas de metadatos GPS
-                de aplicaciones de delivery vinculadas a cuentas comprometidas.</p>
+            <h2>Implications</h2>
 
-            <p style="margin-bottom: 1rem;">Todo esto a partir de tan solo un username y el nombre completo de la
-                persona. Ningún hackeo, ninguna vulnerabilidad explotada, solo OSINT automatizado procesando miles de
-                registros filtrados en cuestión de minutos.</p>
+            <p>This demonstrates the force-multiplying effect of AI-driven OSINT. The same investigation that would take
+                an analyst days of manual work was completed in minutes with comparable accuracy. The agent does not
+                replace human judgment &mdash; it handles the mechanical correlation at scale, freeing the analyst to
+                focus on interpretation, validation, and action.</p>
 
-            <p style="margin-bottom: 1rem;">Lo que acabamos de presenciar es el futuro del OSINT y las operaciones de
-                red team. La implementación de agentes de IA en nuestras tareas de pentesting y OSINT representa un
-                cambio de paradigma en productividad y eficacia.</p>
+            <p>The methodology applies equally to threat intelligence, fraud investigation, and red team reconnaissance.
+                When a target's digital footprint spans dozens of breached databases and stealer log repositories, manual
+                correlation is not just slow &mdash; it is incomplete. An analyst working by hand will inevitably miss
+                connections that automated cross-referencing catches.</p>
 
-            <p style="margin-bottom: 1rem;">Así es como se hace esto sin perder semanas. Los agentes de IA no reemplazan
-                al hacker, simplemente lo convierten en una versión mucho más eficiente y letal.</p>
-
-            <p style="margin-bottom: 2rem; font-style: italic; color: var(--text-gray);">Próximamente más artículos
-                interesantes de OSINT / Red Team.</p>
-            <p
-                style="margin-bottom: 4rem; font-weight: bold; color: var(--accent-red); font-size: 1.5rem; letter-spacing: 2px;">
-                1337 rlz!</p>
+            <p><strong>The tooling described in this post is proprietary.</strong> This article covers methodology and
+                results, not implementation details. The correlation engine, custom search tools, and agent orchestration
+                layer are available under commercial license for authorized law enforcement and intelligence
+                applications.</p>
 
         </article>
 
         <footer>
             <div class="footer-content">
-                <img src="./logo.png" alt="Logo" class="footer-logo">
-                <p class="copyright">&copy; 2024-2025 MELODIE INFOSEC. ALL RIGHTS RESERVED.</p>
+                <img src="./Image/ChatGPT Image Dec 27, 2025, 06_45_15 PM.png" alt="Logo" class="footer-logo">
+                <p class="copyright">&copy; 2024-2026 ALL RIGHTS RESERVED.</p>
             </div>
         </footer>
     </main>
@@ -158,7 +137,6 @@
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/simplelightbox/2.14.2/simple-lightbox.min.js"></script>
     <script>
-        // Initialize SimpleLightbox for article images
         document.addEventListener('DOMContentLoaded', function () {
             const images = document.querySelectorAll('.article-content img');
             images.forEach(img => {
