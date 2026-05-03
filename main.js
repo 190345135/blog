@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const textTarget = document.getElementById('text-type-line1');
     if (textTarget) {
         new TextType(textTarget, null, {
-            text: ["C2 DEVELOPMENT", "EDR EVASION", "OSINT AUTOMATION", "VULNERABILITY RESEARCH", "ADVERSARY EMULATION"],
+            text: ["C2 DEVELOPMENT", "EDR EVASION", "OSINT", "VULN RESEARCH", "RED TEAM OPS"],
             typingSpeed: 60,
             deletingSpeed: 40,
             pauseDuration: 2000,
