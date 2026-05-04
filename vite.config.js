@@ -9,6 +9,8 @@ export default defineConfig({
                 research: resolve(__dirname, 'research.html'),
                 writeups: resolve(__dirname, 'writeups.html'),
                 osint: resolve(__dirname, 'osint-ia.html'),
+                c2: resolve(__dirname, 'c2-framework.html'),
+                zeroday: resolve(__dirname, '0day-shellexplorer.html'),
             },
         },
     },
