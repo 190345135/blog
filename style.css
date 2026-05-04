@@ -585,6 +585,90 @@ nav {
     border-radius: 0;
 }
 
+/* IDE / Terminal Code Blocks */
+.code-window {
+    background: #0d0d0d;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+.code-window .code-titlebar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    background: #1a1a1a;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.code-titlebar .dots {
+    display: flex;
+    gap: 5px;
+}
+
+.code-titlebar .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.code-titlebar .dot.red { background: #ff5f57; }
+.code-titlebar .dot.yellow { background: #febc2e; }
+.code-titlebar .dot.green { background: #28c840; }
+
+.code-titlebar .filename {
+    font-family: 'Courier New', monospace;
+    font-size: 0.7rem;
+    color: var(--text-gray);
+    letter-spacing: 0.5px;
+    margin-left: 0.5rem;
+}
+
+.code-window pre {
+    margin: 0;
+    padding: 1rem 1.25rem;
+    background: transparent;
+    border: none;
+    border-left: none;
+    border-radius: 0;
+}
+
+.code-window pre code {
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    color: #c9d1d9;
+    line-height: 1.65;
+}
+
+.code-window .ln { color: #484848; user-select: none; }
+.code-window .kw { color: #ff7b72; }
+.code-window .fn { color: #d2a8ff; }
+.code-window .str { color: #a5d6ff; }
+.code-window .cm { color: #484848; font-style: italic; }
+.code-window .type { color: #79c0ff; }
+.code-window .num { color: #ffa657; }
+.code-window .def { color: #7ee787; }
+.code-window .op { color: #ff7b72; }
+
+/* Terminal variant */
+.code-window.terminal .code-titlebar {
+    background: #111;
+}
+
+.code-window.terminal .code-titlebar .filename {
+    color: #28c840;
+}
+
+.code-window.terminal pre code {
+    color: #a0a0a0;
+}
+
+.code-window.terminal .prompt { color: #28c840; }
+.code-window.terminal .cmd { color: var(--text-white); }
+.code-window.terminal .out { color: #666; }
+
 .article-content ol,
 .article-content ul {
     margin-left: 1.5rem;

