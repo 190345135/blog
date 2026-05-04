@@ -73,9 +73,11 @@
 <span class="kw">#define</span> <span class="def">CFG_ENABLE_ANTI_CORR</span>     <span class="num">1</span>
 
 <span class="cm">// ── C2 Protocol ──</span>
-<span class="kw">#define</span> <span class="def">CFG_C2_PROTOCOL</span>          <span class="num">CFG_C2_PROTOCOL_DISCORD</span>
+<span class="kw">#define</span> <span class="def">CFG_C2_PROTOCOL</span>          <span class="num">CFG_C2_PROTOCOL_HTTPS</span>
 <span class="kw">#define</span> <span class="def">CFG_C2_BEACON_MS</span>         <span class="num">5000</span>
-<span class="kw">#define</span> <span class="def">CFG_C2_JITTER_PCT</span>        <span class="num">20</span></code></pre>
+<span class="kw">#define</span> <span class="def">CFG_C2_JITTER_PCT</span>        <span class="num">20</span>
+<span class="kw">#define</span> <span class="def">CFG_C2_HEADER_KEY</span>        <span class="str">"X-Request-ID"</span>
+<span class="kw">#define</span> <span class="def">CFG_C2_HEADER_VAL</span>        <span class="str">"..."</span>  <span class="cm">// compiled per-op</span></code></pre>
             </div>
 
             <p>Every evasion component is independently toggleable. This matters operationally &mdash; some techniques
@@ -239,16 +241,57 @@
                 but ignore module stomping. The cascading approach adapts to whatever defenses are present without
                 operator intervention.</p>
 
-            <h2>C2 Communication: Discord as Infrastructure</h2>
+            <h2>C2 Communication: HTTPS Redirector Infrastructure</h2>
 
-            <p>Traditional C2 requires dedicated infrastructure &mdash; domains, servers, certificates, redirectors.
-                All of which cost money and leave forensic traces. The implant supports three communication protocols,
-                but the default uses <strong>Discord</strong> as a free, encrypted, legitimate-looking channel.</p>
+            <p>The framework runs on dedicated AWS infrastructure with a layered redirector architecture
+                designed to separate the C2 server from direct exposure. The C2 teamserver sits inside a
+                private VPC with no public-facing ports &mdash; all inbound traffic flows through an NGINX
+                reverse proxy on a separate instance.</p>
 
-            <p>The implant POSTs encrypted task results to a Discord channel via webhook and polls a separate
-                channel for operator commands. All traffic goes to <code>discord.com</code> over HTTPS &mdash;
-                indistinguishable from normal Discord usage in network telemetry. AES-256-CBC with a pre-shared
-                key encrypts all payloads before transport.</p>
+            <p>The key to the redirector is <strong>header-based filtering</strong>. The implant sends beacons
+                as standard HTTPS requests to a domain that resolves to the NGINX instance, but includes a
+                custom header with an operation-specific token compiled into the binary at build time. NGINX
+                inspects incoming requests and applies a simple routing decision:</p>
+
+            <ul>
+                <li><strong>Valid header</strong> &mdash; request is proxied to the C2 teamserver over the
+                    internal VPC network. The implant receives tasking or exfiltrates results.</li>
+                <li><strong>Missing or invalid header</strong> &mdash; NGINX serves a legitimate-looking website
+                    (a cloned corporate page or blog). Threat hunters, sandboxes, and incident responders see
+                    a normal site.</li>
+            </ul>
+
+            <div class="code-window">
+                <div class="code-titlebar">
+                    <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                    <span class="filename">nginx.conf &mdash; redirector</span>
+                </div>
+<pre><code><span class="kw">server</span> {
+    <span class="kw">listen</span> <span class="num">443</span> ssl;
+    <span class="def">server_name</span>  legitimate-domain.com;
+
+    <span class="cm"># Default: serve decoy site</span>
+    <span class="kw">location</span> / {
+        <span class="def">root</span>  /var/www/decoy;
+        <span class="def">index</span> index.html;
+    }
+
+    <span class="cm"># Implant traffic: header must match compiled token</span>
+    <span class="kw">location</span> /api/v1/ {
+        <span class="kw">if</span> ($http_x_request_id != <span class="str">"[op-token]"</span>) {
+            <span class="kw">return</span> <span class="num">200</span> <span class="str">"OK"</span>;
+        }
+        <span class="def">proxy_pass</span>  http://<span class="num">10.0.1.50</span>:<span class="num">8443</span>;
+        <span class="def">proxy_set_header</span>  Host $host;
+        <span class="def">proxy_set_header</span>  X-Forwarded-For $remote_addr;
+    }
+}</code></pre>
+            </div>
+
+            <p>This architecture gives us several operational advantages: the C2 server has zero internet exposure,
+                the domain passes reputation checks and TLS certificate inspection, and automated scanners never
+                reach the teamserver. AES-256-CBC with a per-operation pre-shared key encrypts all payloads before
+                transport, so even if traffic is intercepted at the NGINX layer, the content is opaque.</p>
 
             <div class="code-window terminal">
                 <div class="code-titlebar">
