@@ -236,14 +236,14 @@
                     <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
                     <span class="filename">CURP / RFC structure</span>
                 </div>
-<pre><code><span class="cm">CURP (18 chars):  CU█J031016HCLL██A3</span>
-<span class="cm">RFC  (13 chars):  CU█J031016██6</span>
+<pre><code><span class="cm">CURP (18 chars):  CU██03████HCL████3</span>
+<span class="cm">RFC  (13 chars):  CU██03██████6</span>
 <span class="cm">                  ^^^^^^^^^^</span>
 <span class="cm">                  First 10 chars are IDENTICAL</span>
-<span class="cm">                  = surname initials + DOB (2003-10-16)</span>
+<span class="cm">                  = surname initials + birthdate</span>
 
-<span class="cm">CURP encodes: C=paterno, U=materno, █=nombre, J=nombre2</span>
-<span class="cm">  + birthdate + H=male + CL=Coahuila + ██=consonants + A3=check</span>
+<span class="cm">CURP encodes: [paterno][materno][nombre][nombre2]</span>
+<span class="cm">  + birthdate + gender + birth_state + consonants + check</span>
 
 <span class="cm">Given an RFC from financial records:</span>
 <span class="cm">  → Extract first 10 characters</span>
@@ -288,17 +288,17 @@
 
 <span class="cm"># Cross-reference: address search for household composition</span>
 <span class="prompt">$</span> <span class="cmd">findstr /I "GARZAS.*325" "D:\Bases de Datos Mexico\COA\COA.csv"</span>
-<span class="out">  → 4 residents at AV LAS GARZAS 325, COL EL FENIX</span>
+<span class="out">  → 4 residents at AV LAS ██████ 325, COL EL ██████</span>
 <span class="out">  → 3 share paterno (siblings: J.D. b.1992, A.J. b.1994, D. b.1997)</span>
 <span class="out">  → Target inferred as youngest son (b.2003)</span>
 
 <span class="cm"># Extended family — materno as paterno (maternal line)</span>
 <span class="prompt">$</span> <span class="cmd">findstr /I "HE██████Z.*CU████R" "COA.csv"</span>
-<span class="out">  → Father: V████TE  b.1962  CURP: CU██620405HCLL██05</span>
-<span class="out">  → Mother: MA. T████SA  b.1964  CURP: HE██640217MCLL██07</span>
+<span class="out">  → Father: V██████  b.19██  CURP: CU██████HCLL████</span>
+<span class="out">  → Mother: MA. T██████  b.19██  CURP: HE██████MCLL████</span>
 
 <span class="cm"># Second household discovered in Saltillo via LUNA-CU████R branch</span>
-<span class="out">  → C GRECIA 364, FRACC EUROPA, CP 25290, SALTILLO</span>
+<span class="out">  → C ██████ ███, FRACC ██████, CP █████, SALTILLO</span>
 <span class="out">  → 5 residents — grandfather, aunt, uncle, 2 cousins</span></code></pre>
             </div>
 
@@ -420,9 +420,9 @@
   <span class="cm">│     └──</span> Saved credentials confirming account ownership
   <span class="cm">│</span>
   <span class="cm">├──</span> <span class="fn">Government Records</span> <span class="cm">→ CURP / RFC / INE</span>
-  <span class="cm">│     ├──</span> CURP: CU█J031016HCLL██A3 (DOB: 2003-10-16)
-  <span class="cm">│     ├──</span> Address: AV LAS G████ 325, COL EL F████
-  <span class="cm">│     ├──</span> Parents: V████TE (b.1962) + MA. T████SA (b.1964)
+  <span class="cm">│     ├──</span> CURP: CU██03████HCL████3 (DOB confirmed)
+  <span class="cm">│     ├──</span> Address: AV LAS ██████ ███, COL EL ██████
+  <span class="cm">│     ├──</span> Parents: V██████ (b.19██) + MA. T██████ (b.19██)
   <span class="cm">│     └──</span> Family tree: 3 generations, 2 cities, 3 households
   <span class="cm">│</span>
   <span class="cm">├──</span> <span class="fn">Social Media Deep Dive</span> <span class="cm">→ vehicles + photos</span>

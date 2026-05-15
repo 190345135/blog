@@ -646,7 +646,7 @@ nav {
 .code-window .kw { color: #ff7b72; }
 .code-window .fn { color: #d2a8ff; }
 .code-window .str { color: #a5d6ff; }
-.code-window .cm { color: #484848; font-style: italic; }
+.code-window .cm { color: #6a737d; font-style: italic; }
 .code-window .type { color: #79c0ff; }
 .code-window .num { color: #ffa657; }
 .code-window .def { color: #7ee787; }
@@ -662,12 +662,12 @@ nav {
 }
 
 .code-window.terminal pre code {
-    color: #a0a0a0;
+    color: #c0c0c0;
 }
 
 .code-window.terminal .prompt { color: #28c840; }
 .code-window.terminal .cmd { color: var(--text-white); }
-.code-window.terminal .out { color: #666; }
+.code-window.terminal .out { color: #b0b0b0; }
 
 .article-content ol,
 .article-content ul {
