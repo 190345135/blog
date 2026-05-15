@@ -41,13 +41,13 @@
                 records, leaked databases, and physical-world indicators to build a complete profile that includes
                 family networks, vehicle registrations, and confirmed physical addresses.</p>
 
-            <p>This article walks through a real investigation (fully anonymized) where a single username was
+            <p>This article walks through a real investigation where the username <code>ElMissu</code> was
                 escalated to a complete intelligence profile including family tree, multiple physical locations,
                 vehicle identification, and IMINT-confirmed geolocation &mdash; using a custom OSINT platform
                 I built specifically for the Mexican digital ecosystem.</p>
 
-            <p><strong>The investigation described here was conducted under authorized scope for a legitimate
-                engagement.</strong> All identifying information has been sanitized.</p>
+            <p><strong>The investigation described here was conducted under authorized scope.</strong>
+                Certain details have been partially redacted.</p>
 
             <h2>Phase 1: Building the Enumeration Engine</h2>
 
@@ -130,6 +130,41 @@
                 email &mdash; information that's completely hidden in the web interface. These become high-value
                 enumeration sources.</p>
 
+            <p>Running the username <code>ElMissu</code> and associated identifiers through the enumeration
+                engine produced hits across 25+ services:</p>
+
+            <div class="code-window terminal">
+                <div class="code-titlebar">
+                    <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                    <span class="filename">enumeration results &mdash; ElMissu</span>
+                </div>
+<pre><code><span class="prompt">[enum]</span> <span class="cmd">Target: ElMissu / +52 844 ███ ████ / missael*****@gmail.com</span>
+
+<span class="out"> [+] Telegram       t.me/ElMissu          ID: 5822406739</span>
+<span class="out"> [+] Instagram      srmissu_              (public profile)</span>
+<span class="out"> [+] TikTok         @elmissu              since 2019-02-15</span>
+<span class="out"> [+] TikTok         @mistermissu          (alt account)</span>
+<span class="out"> [+] Reddit         u/ElMissu             since 2019-10-21</span>
+<span class="out"> [+] Snapchat       @elmissu</span>
+<span class="out"> [+] Steam          76561198828244399     "jonathan M████ H████ M████"</span>
+<span class="out"> [+] Chess.com      ElMissu               "Cu████ H████ Jonathan m████"</span>
+<span class="out"> [+] Duolingo       ElMissu               since 2019</span>
+<span class="out"> [+] YouTube        UC0hMS...             created 2024-08-14</span>
+<span class="out"> [+] Twitch         elmissu</span>
+<span class="out"> [+] Pinterest      elmissu</span>
+<span class="out"> [+] osu!           14236816</span>
+<span class="out"> [+] Apex Legends   ElMissu (Origin)</span>
+<span class="out"> [+] R6 Siege       ElMissu (PSN)</span>
+
+<span class="cm"># Phone number enumeration:</span>
+<span class="out"> [+] Life360  [+] CallApp  [+] TrueCaller  [+] Deezer</span>
+<span class="out"> [+] Spotify  [+] Disney+  [+] Amazon  [+] EA  [+] Ubisoft</span>
+<span class="out"> [+] ESPN  [+] Nvidia  [+] Pokemon.com  [+] Unity</span>
+
+<span class="cm"># Key finding: Steam and Chess.com leaked fragments of real name</span>
+<span class="cm"># Cross-referencing fragments → full name confirmed via CURP lookup</span></code></pre>
+            </div>
+
             <h2>Phase 2: Stealer Log Intelligence</h2>
 
             <p>Stealer logs are the most underutilized intelligence source in OSINT. Infostealers like
@@ -182,9 +217,12 @@
                     accounts to the same physical device</li>
             </ul>
 
-            <p>In this investigation, stealer log data provided the target's <strong>residential IP address</strong>,
-                which geolocated to a specific city in northern Mexico. This single data point narrowed the
-                government record search from 32 states to a single municipality.</p>
+            <p>In this investigation, querying <code>missael*****@gmail.com</code> against the stealer log
+                database returned hits with the residential IP <code>189.218.██.██</code>, which geolocated
+                to <strong>Ramos Arizpe, Coahuila</strong> &mdash; narrowing the government record search
+                from 32 states to a single municipality. The same IP also appeared associated with two other
+                email addresses (<code>kariina_****@hotmail.com</code>, <code>r****ipn@gmail.com</code>),
+                suggesting shared household internet &mdash; likely family members on the same network.</p>
 
             <h2>Phase 3: Government Record Correlation</h2>
 
@@ -198,11 +236,14 @@
                     <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
                     <span class="filename">CURP / RFC structure</span>
                 </div>
-<pre><code><span class="cm">CURP (18 chars):  XXXX000000HCLLRNA3</span>
-<span class="cm">RFC  (13 chars):  XXXX0000003Q6</span>
+<pre><code><span class="cm">CURP (18 chars):  CU█J031016HCLL██A3</span>
+<span class="cm">RFC  (13 chars):  CU█J031016██6</span>
 <span class="cm">                  ^^^^^^^^^^</span>
 <span class="cm">                  First 10 chars are IDENTICAL</span>
-<span class="cm">                  = surname initials + birthdate</span>
+<span class="cm">                  = surname initials + DOB (2003-10-16)</span>
+
+<span class="cm">CURP encodes: C=paterno, U=materno, █=nombre, J=nombre2</span>
+<span class="cm">  + birthdate + H=male + CL=Coahuila + ██=consonants + A3=check</span>
 
 <span class="cm">Given an RFC from financial records:</span>
 <span class="cm">  → Extract first 10 characters</span>
@@ -231,27 +272,34 @@
                 <li>Cross-reference addresses &rarr; confirms which family members live together</li>
             </ul>
 
-            <p>In this investigation, starting from a single confirmed name, I reconstructed a three-generation
-                family tree spanning two cities &mdash; parents, siblings, extended family &mdash; with confirmed
-                addresses for each household.</p>
+            <p>In this investigation, starting from the confirmed name, I reconstructed a three-generation
+                family tree spanning two cities (Monclova and Saltillo) &mdash; parents, four siblings, extended
+                family &mdash; with confirmed addresses for each household.</p>
 
             <div class="code-window terminal">
                 <div class="code-titlebar">
                     <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
                     <span class="filename">family network reconstruction</span>
                 </div>
-<pre><code><span class="cm"># INE database search — surname as paterno</span>
-<span class="prompt">$</span> <span class="cmd">findstr /I "SURNAME_A" "state_voter_registry.csv"</span>
-<span class="out">  → 47 results in target state</span>
+<pre><code><span class="cm"># INE database search — target surname as paterno in Coahuila</span>
+<span class="prompt">$</span> <span class="cmd">findstr /I "CU████R" "D:\Bases de Datos Mexico\COA\COA.csv"</span>
+<span class="out">  → 47 results in Coahuila state</span>
 <span class="out">  → 6 share the same electoral section (confirmed family cluster)</span>
 
-<span class="cm"># Cross-reference: same address, different surnames</span>
-<span class="prompt">$</span> <span class="cmd">findstr /I "TARGET_STREET.*325" "state_voter_registry.csv"</span>
-<span class="out">  → 4 residents at address</span>
-<span class="out">  → 3 share paterno (siblings)</span>
-<span class="out">  → 1 different surname (spouse, confirmed via materno match)</span>
+<span class="cm"># Cross-reference: address search for household composition</span>
+<span class="prompt">$</span> <span class="cmd">findstr /I "GARZAS.*325" "D:\Bases de Datos Mexico\COA\COA.csv"</span>
+<span class="out">  → 4 residents at AV LAS GARZAS 325, COL EL FENIX</span>
+<span class="out">  → 3 share paterno (siblings: J.D. b.1992, A.J. b.1994, D. b.1997)</span>
+<span class="out">  → Target inferred as youngest son (b.2003)</span>
 
-<span class="cm"># Result: complete household composition from public records</span></code></pre>
+<span class="cm"># Extended family — materno as paterno (maternal line)</span>
+<span class="prompt">$</span> <span class="cmd">findstr /I "HE██████Z.*CU████R" "COA.csv"</span>
+<span class="out">  → Father: V████TE  b.1962  CURP: CU██620405HCLL██05</span>
+<span class="out">  → Mother: MA. T████SA  b.1964  CURP: HE██640217MCLL██07</span>
+
+<span class="cm"># Second household discovered in Saltillo via LUNA-CU████R branch</span>
+<span class="out">  → C GRECIA 364, FRACC EUROPA, CP 25290, SALTILLO</span>
+<span class="out">  → 5 residents — grandfather, aunt, uncle, 2 cousins</span></code></pre>
             </div>
 
             <h2>Phase 4: Social Media Deep Dive</h2>
@@ -267,50 +315,61 @@
             <div class="code-window terminal">
                 <div class="code-titlebar">
                     <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
-                    <span class="filename">Facebook deep search</span>
+                    <span class="filename">Facebook deep search — ElMissu</span>
                 </div>
-<pre><code><span class="cm"># Search target's entire post history for vehicle-related content</span>
-<span class="prompt">query:</span> <span class="cmd">"carro" OR "vendo" OR "problema" OR "mec&aacute;nico"</span>
-<span class="out">  → Post from 2023: asking about transmission issues on [vehicle model]</span>
-<span class="out">  → Marketplace listing: selling parts for [specific car]</span>
-<span class="out">  → Photo post: vehicle parked in front of residential building</span>
+<pre><code><span class="cm"># Enumeration found Facebook: facebook.com/missa.██████████/</span>
+<span class="cm"># Marketplace profile also exposed: /marketplace/profile/100024676██████/</span>
 
-<span class="cm"># The marketplace listing confirmed vehicle make/model/year</span>
-<span class="cm"># The photo post provided the IMINT pivot for geolocation</span></code></pre>
+<span class="cm"># Deep search: vehicle-related content across full post history</span>
+<span class="prompt">query:</span> <span class="cmd">"carro" OR "BMW" OR "mustang" OR "mec&aacute;nico" OR "vendo"</span>
+<span class="out">  → Post: asking about BMW 325iA 2006 transmission issues</span>
+<span class="out">  → Marketplace: listing parts for Ford Mustang V6 S197</span>
+<span class="out">  → Photo: BMW parked in front of residential building</span>
+
+<span class="cm"># Two vehicles confirmed:</span>
+<span class="cm">#   1. BMW 325iA 2006 Sedan — no plates visible</span>
+<span class="cm">#   2. Ford Mustang V6 S197 (2005-2009)</span>
+<span class="cm"># The BMW photo contained a residential building → IMINT pivot</span></code></pre>
             </div>
 
-            <p>In this case, the target had posted about mechanical issues with a specific vehicle, listed
-                car parts on Facebook Marketplace (which exposes the seller's profile even on "anonymous"
-                listings), and uploaded a photo that incidentally showed a residential building behind the
-                vehicle. That photo became the key to physical confirmation.</p>
+            <p>The target had posted about mechanical issues with a BMW 325iA, listed Mustang parts on
+                Facebook Marketplace (which exposes the seller's profile even on "anonymous" listings), and
+                uploaded a photo of the BMW that incidentally showed a residential building behind the vehicle.
+                That photo became the key to physical confirmation.</p>
 
             <h2>Phase 5: IMINT &mdash; Geolocating a House from a Car Photo</h2>
 
-            <p>The target posted a photo of their vehicle parked in a residential area. The car was the
-                subject of the photo, but the <strong>background</strong> contained enough architectural and
-                geographic detail to pinpoint the exact location.</p>
+            <p>The target posted a photo of their BMW parked in front of a residential building. The car was the
+                subject, but the <strong>background</strong> contained enough architectural and geographic detail
+                to pinpoint the exact location.</p>
+
+            <div style="margin: 2rem 0;">
+                <img src="./Image/osint/car-annotated.png" alt="IMINT analysis of vehicle photo"
+                    style="width: 100%; border-radius: 4px; border: 1px solid rgba(100,1,0,0.3);">
+                <p style="color: var(--text-gray); font-size: 0.8rem; margin-top: 0.5rem; text-align: center;">
+                    Source photograph with IMINT annotations &mdash; four geolocation anchors identified</p>
+            </div>
 
             <p>The methodology:</p>
 
             <ol>
-                <li><strong>Architectural analysis</strong> &mdash; the building style (concrete block, specific
-                    window patterns, carport design) is consistent with low-cost housing developments
-                    (<em>fraccionamientos populares</em>) common in northern Mexican cities</li>
+                <li><strong>Architectural analysis</strong> &mdash; the building style (concrete block, striped
+                    carport canopy, specific window pattern) is consistent with <em>fraccionamientos populares</em>
+                    common in Coahuila's urban sprawl. The concrete tile paving pattern is a northern Mexico
+                    regional indicator.</li>
                 <li><strong>Known city from prior intelligence</strong> &mdash; stealer log IP + voter registration
-                    had already confirmed the city. This narrowed the search from "anywhere in Mexico" to a
-                    specific municipality</li>
+                    had already confirmed Ramos Arizpe / Monclova area. This narrowed from "anywhere in Mexico"
+                    to a specific municipality.</li>
                 <li><strong>Overpass Turbo query</strong> &mdash; using OpenStreetMap data to identify residential
-                    developments matching the architectural pattern in the target city</li>
-                <li><strong>Google Earth confirmation</strong> &mdash; street-level imagery matched the building
-                    facade, carport angle, and surrounding structures visible in the target's photo</li>
+                    developments matching the architectural pattern in the target area:</li>
             </ol>
 
             <div class="code-window">
                 <div class="code-titlebar">
                     <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
-                    <span class="filename">overpass query</span>
+                    <span class="filename">overpass query &mdash; Coahuila residential zones</span>
                 </div>
-<pre><code><span class="cm">// Overpass Turbo — find residential developments in target area</span>
+<pre><code><span class="cm">// Overpass Turbo — fraccionamientos in target municipality</span>
 [<span class="str">out:json</span>][<span class="str">timeout:60</span>];
 (
   <span class="kw">way</span>[<span class="str">"landuse"</span>=<span class="str">"residential"</span>]
@@ -323,10 +382,19 @@
 <span class="kw">out</span> skel qt;</code></pre>
             </div>
 
-            <p>The satellite imagery confirmed the match &mdash; the building facade, the parking layout, and
-                even the street-level details were consistent with the incidental background in the target's
-                photo. This converted a social media post into a <strong>confirmed physical address</strong>,
-                independently validating the voter registration data.</p>
+            <p>Google Earth satellite imagery confirmed the match &mdash; the building facade, carport layout,
+                and surrounding structures aligned with the source photo:</p>
+
+            <div style="margin: 2rem 0;">
+                <img src="./Image/osint/satellite-annotated.png" alt="GEOINT satellite confirmation"
+                    style="width: 100%; max-width: 500px; border-radius: 4px; border: 1px solid rgba(100,1,0,0.3); display: block; margin: 0 auto;">
+                <p style="color: var(--text-gray); font-size: 0.8rem; margin-top: 0.5rem; text-align: center;">
+                    Satellite imagery confirmation &mdash; target residence cross-referenced against voter registry address</p>
+            </div>
+
+            <p>The satellite view confirmed the residential development type, street layout, and building
+                positioning. This converted a social media car photo into a <strong>confirmed physical
+                address</strong>, independently validating the voter registration data from Phase 3.</p>
 
             <h2>The Complete Pipeline</h2>
 
@@ -338,38 +406,41 @@
                     <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
                     <span class="filename">intelligence pipeline</span>
                 </div>
-<pre><code><span class="str">Username</span> (seed)
+<pre><code><span class="str">ElMissu</span> (seed username)
   <span class="cm">│</span>
-  <span class="cm">├──</span> <span class="fn">Enumeration Engine</span> <span class="cm">→ 25+ service registrations confirmed</span>
-  <span class="cm">│     ├──</span> Email addresses (primary + secondary)
-  <span class="cm">│     ├──</span> Phone number
-  <span class="cm">│     └──</span> Linked social media accounts
+  <span class="cm">├──</span> <span class="fn">Enumeration Engine</span> <span class="cm">→ 25+ services confirmed</span>
+  <span class="cm">│     ├──</span> missael*****@gmail.com, elm████@hotmail.com
+  <span class="cm">│     ├──</span> +52 844 ███ ████
+  <span class="cm">│     ├──</span> Steam/Chess.com leaked name fragments
+  <span class="cm">│     └──</span> 15+ social accounts (TG, IG, TikTok, Reddit...)
   <span class="cm">│</span>
-  <span class="cm">├──</span> <span class="fn">Stealer Log Correlation</span> <span class="cm">→ IP address + saved credentials</span>
-  <span class="cm">│     ├──</span> Residential IP → city-level geolocation
-  <span class="cm">│     ├──</span> Additional accounts from saved passwords
-  <span class="cm">│     └──</span> Associated IPs on same network (family members)
+  <span class="cm">├──</span> <span class="fn">Stealer Log Correlation</span> <span class="cm">→ IP + linked emails</span>
+  <span class="cm">│     ├──</span> IP 189.218.██.██ → Ramos Arizpe, Coahuila
+  <span class="cm">│     ├──</span> 3 emails on same IP (household members)
+  <span class="cm">│     └──</span> Saved credentials confirming account ownership
   <span class="cm">│</span>
-  <span class="cm">├──</span> <span class="fn">Government Records</span> <span class="cm">→ CURP / RFC / voter registration</span>
-  <span class="cm">│     ├──</span> Full legal name + DOB
-  <span class="cm">│     ├──</span> Registered address
-  <span class="cm">│     ├──</span> Electoral section (precise neighborhood)
-  <span class="cm">│     └──</span> Family tree (3 generations, 2 cities)
+  <span class="cm">├──</span> <span class="fn">Government Records</span> <span class="cm">→ CURP / RFC / INE</span>
+  <span class="cm">│     ├──</span> CURP: CU█J031016HCLL██A3 (DOB: 2003-10-16)
+  <span class="cm">│     ├──</span> Address: AV LAS G████ 325, COL EL F████
+  <span class="cm">│     ├──</span> Parents: V████TE (b.1962) + MA. T████SA (b.1964)
+  <span class="cm">│     └──</span> Family tree: 3 generations, 2 cities, 3 households
   <span class="cm">│</span>
-  <span class="cm">├──</span> <span class="fn">Social Media Deep Dive</span> <span class="cm">→ vehicle ID + incidental photos</span>
-  <span class="cm">│     ├──</span> Vehicle make/model/year from marketplace
-  <span class="cm">│     ├──</span> Mechanical posts confirming ownership
-  <span class="cm">│     └──</span> Photo with residential building in background
+  <span class="cm">├──</span> <span class="fn">Social Media Deep Dive</span> <span class="cm">→ vehicles + photos</span>
+  <span class="cm">│     ├──</span> BMW 325iA 2006 Sedan (no plates)
+  <span class="cm">│     ├──</span> Ford Mustang V6 S197 (marketplace)
+  <span class="cm">│     └──</span> BMW photo with residential building → IMINT pivot
   <span class="cm">│</span>
-  <span class="cm">└──</span> <span class="fn">IMINT Confirmation</span> <span class="cm">→ physical address validated</span>
-        <span class="cm">├──</span> Architectural analysis → housing development type
-        <span class="cm">├──</span> Overpass Turbo → candidate locations
-        <span class="cm">└──</span> Google Earth → exact building match confirmed</code></pre>
+  <span class="cm">└──</span> <span class="fn">IMINT Confirmation</span> <span class="cm">→ address validated</span>
+        <span class="cm">├──</span> Fraccionamiento architecture → northern Coahuila
+        <span class="cm">├──</span> Overpass Turbo → candidate developments
+        <span class="cm">└──</span> Google Earth satellite → exact building confirmed</code></pre>
             </div>
 
-            <p>The final product was a complete intelligence profile: full identity, family network across
-                multiple households, vehicle registrations, 30+ online accounts, confirmed physical address
-                with satellite imagery, and a digital footprint spanning a decade of online activity.</p>
+            <p>The final product was a complete intelligence profile: full legal identity with CURP/RFC,
+                family network across three households in two cities, two vehicles identified, 25+ online
+                accounts enumerated, confirmed physical address cross-validated via voter registry + satellite
+                imagery, and a digital footprint spanning from 2019 to present across gaming, social media,
+                and messaging platforms &mdash; all from the seed input <code>ElMissu</code>.</p>
 
             <h2>Lessons for Defenders</h2>
 
