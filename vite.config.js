@@ -13,6 +13,8 @@ export default defineConfig({
                 c2: resolve(__dirname, 'c2-framework.html'),
                 zeroday: resolve(__dirname, '0day-shellexplorer.html'),
                 osintfull: resolve(__dirname, 'osint-fullspectrum.html'),
+                identityfraud: resolve(__dirname, 'identity-fraud-osint.html'),
+                aiosint: resolve(__dirname, 'ai-osint-architecture.html'),
             },
         },
     },

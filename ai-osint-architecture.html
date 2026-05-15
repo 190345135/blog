@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Building an AI OSINT Agent: Architecture for Autonomous Investigation | Offensive Security</title>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="./style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;900&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="cursor"></div>
+    <div class="cursor-follower"></div>
+    <div class="vignette"></div>
+
+    <nav>
+        <div class="nav-links">
+            <a href="./">MAIN</a>
+            <span class="separator">/</span>
+            <a href="./research.html" class="active">RESEARCH</a>
+            <span class="separator">/</span>
+            <a href="./writeups.html">WRITEUPS</a>
+            <span class="separator">/</span>
+            <a href="./#contact">CONTACT</a>
+        </div>
+    </nav>
+
+    <main class="content-page"
+        style="padding-top: 100px; max-width: 800px; margin: 0 auto; padding-left: 20px; padding-right: 20px;">
+        <article class="article-content" data-aos="fade-up">
+            <h1>Building an AI OSINT Agent: Architecture for Autonomous Investigation</h1>
+            <div class="article-meta">MAY 2026 &mdash; AI ENGINEERING / OSINT / TOOL DEVELOPMENT / AUTOMATION</div>
+
+            <p>In previous articles I've shown the <a href="./osint-ia.html"
+                style="color: var(--text-white);">results</a> of using AI agents for OSINT &mdash;
+                profiling a USSS Most Wanted target, <a href="./osint-fullspectrum.html"
+                style="color: var(--text-white);">building complete intelligence profiles</a> from
+                a single username, and <a href="./identity-fraud-osint.html"
+                style="color: var(--text-white);">unmasking identity fraud structures</a> from
+                minimal seed data. This article covers what I haven't shown before: <strong>how the
+                agent actually works</strong> &mdash; the architecture, the tool layer, the reasoning
+                chain, and why this approach produces results that neither pure automation nor manual
+                analysis can match alone.</p>
+
+            <p>This is not "asking ChatGPT to do OSINT." It's an autonomous agent with direct access
+                to custom databases, enumeration tools, and correlation engines &mdash; capable of
+                reasoning through an investigation the way an experienced analyst would, but at a
+                speed and scale that no human can sustain.</p>
+
+            <p>The conceptual model is similar to what <strong>Palantir AIP</strong> does for
+                government and enterprise clients: connect heterogeneous data sources through cloud
+                infrastructure, then let an AI layer query, correlate, and reason across all of them
+                simultaneously. Palantir charges millions for this capability. I built a focused
+                version of the same architecture for OSINT &mdash; cloud-hosted databases (stealer
+                logs, leaked records, enumeration results) unified under a single AI agent that can
+                query any source, cross-reference findings in real time, and follow investigative
+                threads across datasets that were never designed to talk to each other.</p>
+
+            <h2>Why an Agent, Not a Script</h2>
+
+            <p>The first question most people ask is: why not just write a Python script that queries
+                your databases and correlates the results?</p>
+
+            <p>Scripts follow predefined logic. They're fast and reliable for known patterns, but they
+                can't handle the <strong>unexpected pivots</strong> that make investigations productive.
+                When a stealer log query returns an email that doesn't match the target name, a script
+                either ignores it or follows a hardcoded fallback. An agent <em>reasons about why there's
+                a mismatch</em> and decides to investigate the email owner independently &mdash; exactly
+                what a human analyst would do.</p>
+
+            <p>The core insight is that OSINT investigations are <strong>decision trees with unknown
+                branches</strong>. You can't script every possible pivot because you don't know what
+                the data will reveal until you query it. An LLM agent handles this naturally &mdash;
+                it evaluates results, formulates hypotheses, and selects the next query based on what
+                it's learned so far.</p>
+
+            <h2>Architecture</h2>
+
+            <p>The system has three layers: the <strong>agent</strong> (reasoning and decision-making),
+                the <strong>tool layer</strong> (database queries, enumeration, and lookups), and the
+                <strong>data infrastructure</strong> (continuously updated databases on AWS).</p>
+
+            <div class="code-window">
+                <div class="code-titlebar">
+                    <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                    <span class="filename">system architecture</span>
+                </div>
+<pre><code><span class="def">AGENT LAYER</span> <span class="cm">(LLM with tool-use capability)</span>
+<span class="cm">  │</span>
+<span class="cm">  │  The agent receives a directive ("Investigate X")</span>
+<span class="cm">  │  and autonomously decides which tools to call,</span>
+<span class="cm">  │  in what order, based on intermediate results.</span>
+<span class="cm">  │</span>
+<span class="cm">  ├──────────────────────────────────────────────────</span>
+<span class="cm">  │</span>
+<span class="def">TOOL LAYER</span> <span class="cm">(custom function definitions)</span>
+<span class="cm">  │</span>
+<span class="cm">  ├──</span> <span class="fn">stealer_log_search</span>    <span class="cm">→ query indexed breach/stealer data</span>
+<span class="cm">  ├──</span> <span class="fn">enumerate_accounts</span>    <span class="cm">→ check 40+ services by email/phone/user</span>
+<span class="cm">  ├──</span> <span class="fn">leaked_db_search</span>      <span class="cm">→ search leaked records by name/CURP/RFC</span>
+<span class="cm">  ├──</span> <span class="fn">curp_rfc_lookup</span>       <span class="cm">→ decode/cross-reference identity numbers</span>
+<span class="cm">  ├──</span> <span class="fn">phone_lookup</span>          <span class="cm">→ carrier info, caller ID, linked accounts</span>
+<span class="cm">  ├──</span> <span class="fn">ip_geolocation</span>        <span class="cm">→ resolve IP to city/ISP/coordinates</span>
+<span class="cm">  └──</span> <span class="fn">facebook_deep_search</span>  <span class="cm">→ full post history via API endpoints</span>
+<span class="cm">  │</span>
+<span class="cm">  ├──────────────────────────────────────────────────</span>
+<span class="cm">  │</span>
+<span class="def">DATA INFRASTRUCTURE</span> <span class="cm">(AWS — continuously updated)</span>
+<span class="cm">  │</span>
+<span class="cm">  ├──</span> <span class="type">PostgreSQL</span>   <span class="cm">← stealer log pipeline (Telegram → parser → DB)</span>
+<span class="cm">  ├──</span> <span class="type">PostgreSQL</span>   <span class="cm">← leaked database index (records searchable by any field)</span>
+<span class="cm">  └──</span> <span class="type">Enumeration</span>  <span class="cm">← 40+ service APIs (API RE + SSL pinning bypass)</span></code></pre>
+            </div>
+
+            <h2>The Tool Layer</h2>
+
+            <p>Each tool is defined as a structured function that the agent can call with specific
+                parameters. The agent sees a description of what each tool does and what parameters
+                it accepts &mdash; it decides when and how to use them based on the investigation
+                context.</p>
+
+            <div class="code-window">
+                <div class="code-titlebar">
+                    <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                    <span class="filename">tool definitions (simplified)</span>
+                </div>
+<pre><code><span class="kw">tools</span> = [
+    {
+        <span class="str">"name"</span>: <span class="str">"stealer_log_search"</span>,
+        <span class="str">"description"</span>: <span class="str">"Search indexed stealer logs and breach data.</span>
+<span class="str">            Returns URLs, credentials, IPs, HWIDs, and timestamps</span>
+<span class="str">            for any matching email, username, or domain."</span>,
+        <span class="str">"parameters"</span>: {
+            <span class="str">"query"</span>:      <span class="cm">// email, username, or domain</span>
+            <span class="str">"query_type"</span>: <span class="cm">// "email" | "username" | "domain" | "ip"</span>
+            <span class="str">"limit"</span>:      <span class="cm">// max results (default 50)</span>
+        }
+    },
+    {
+        <span class="str">"name"</span>: <span class="str">"leaked_db_search"</span>,
+        <span class="str">"description"</span>: <span class="str">"Search leaked database records by name,</span>
+<span class="str">            CURP prefix, RFC, address, or date of birth.</span>
+<span class="str">            Returns identity records with full metadata."</span>,
+        <span class="str">"parameters"</span>: {
+            <span class="str">"name"</span>:       <span class="cm">// full or partial name</span>
+            <span class="str">"state"</span>:      <span class="cm">// Mexican state code (optional)</span>
+            <span class="str">"curp"</span>:       <span class="cm">// full or partial CURP</span>
+            <span class="str">"address"</span>:    <span class="cm">// street, colony, or CP</span>
+        }
+    },
+    {
+        <span class="str">"name"</span>: <span class="str">"enumerate_accounts"</span>,
+        <span class="str">"description"</span>: <span class="str">"Check 40+ services for account existence.</span>
+<span class="str">            Returns confirmed accounts with leaked metadata</span>
+<span class="str">            (names, registration dates, profile fragments)."</span>,
+        <span class="str">"parameters"</span>: {
+            <span class="str">"identifier"</span>: <span class="cm">// email, phone, or username</span>
+            <span class="str">"type"</span>:       <span class="cm">// "email" | "phone" | "username"</span>
+        }
+    },
+    {
+        <span class="str">"name"</span>: <span class="str">"curp_rfc_decode"</span>,
+        <span class="str">"description"</span>: <span class="str">"Decode a CURP or RFC into its components:</span>
+<span class="str">            surname initials, birthdate, gender, birth state.</span>
+<span class="str">            Can cross-reference CURP &harr; RFC via shared prefix."</span>,
+        <span class="str">"parameters"</span>: {
+            <span class="str">"identifier"</span>: <span class="cm">// CURP (18 chars) or RFC (13 chars)</span>
+        }
+    }
+]</code></pre>
+            </div>
+
+            <p>The tool definitions are intentionally descriptive. The agent needs to understand
+                not just <em>what</em> a tool does, but <em>when</em> it's useful. A vague description
+                like "search database" means the agent won't know whether to use it for a name, an
+                email, or an IP address. Specificity in tool definitions directly translates to better
+                investigation decisions.</p>
+
+            <h2>Data Infrastructure: The Stealer Log Pipeline</h2>
+
+            <p>The most critical data source is the stealer log database. Infostealers (RedLine,
+                Raccoon, Vidar, Lumma) continuously produce credential dumps that circulate through
+                Telegram channels. This data is ephemeral &mdash; channels get banned, files expire,
+                links die. If you're not scraping and indexing it in real time, you lose it.</p>
+
+            <p>I built an automated pipeline that runs 24/7 on AWS:</p>
+
+            <div class="code-window">
+                <div class="code-titlebar">
+                    <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                    <span class="filename">stealer log pipeline</span>
+                </div>
+<pre><code><span class="str">Telegram Channels</span> (50+ monitored)
+  <span class="cm">│</span>
+  <span class="cm">│</span>  <span class="cm">Telethon client monitors for new file uploads</span>
+  <span class="cm">│</span>  <span class="cm">Downloads .txt, .csv, .zip archives automatically</span>
+  <span class="cm">│</span>
+  <span class="cm">▼</span>
+<span class="str">Parser Engine</span>
+  <span class="cm">│</span>
+  <span class="cm">│</span>  <span class="cm">Detects log format (RedLine, Raccoon, Vidar, etc.)</span>
+  <span class="cm">│</span>  <span class="cm">Extracts: URL | email | password | IP | HWID | timestamp</span>
+  <span class="cm">│</span>  <span class="cm">Normalizes data across different stealer formats</span>
+  <span class="cm">│</span>  <span class="cm">Deduplicates against existing records</span>
+  <span class="cm">│</span>
+  <span class="cm">▼</span>
+<span class="str">PostgreSQL</span> (AWS VPS)
+  <span class="cm">│</span>
+  <span class="cm">│</span>  <span class="cm">Indexed by: email, username, domain, IP, HWID</span>
+  <span class="cm">│</span>  <span class="cm">Full-text search on URL field</span>
+  <span class="cm">│</span>  <span class="cm">Millions of records, searchable in &lt;500ms</span>
+  <span class="cm">│</span>
+  <span class="cm">▼</span>
+<span class="fn">stealer_log_search</span> <span class="cm">(tool exposed to agent)</span></code></pre>
+            </div>
+
+            <p>The pipeline processes new dumps within minutes of being posted. When the agent
+                queries for an email, it's searching against a continuously growing corpus of
+                compromised credentials that most commercial OSINT platforms don't have access to
+                &mdash; or charge $10,000+ annually for equivalent coverage.</p>
+
+            <h2>Agent Reasoning in Practice</h2>
+
+            <p>This is where the architecture comes together. The agent doesn't follow a script
+                &mdash; it <strong>reasons through the investigation</strong>, making decisions
+                based on what each query returns. Here's a reconstructed reasoning chain from the
+                <a href="./identity-fraud-osint.html" style="color: var(--text-white);">identity
+                fraud investigation</a>:</p>
+
+            <div class="code-window terminal">
+                <div class="code-titlebar">
+                    <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                    <span class="filename">agent reasoning chain &mdash; identity fraud case</span>
+                </div>
+<pre><code><span class="def">DIRECTIVE:</span> <span class="out">"Investigate [target name]. Suspected financial</span>
+<span class="out">fraud. Build complete identity profile."</span>
+
+<span class="cm">─── STEP 1: Initial pivot ───</span>
+<span class="def">REASONING:</span> <span class="out">I have a name and a geographic area. No email,</span>
+<span class="out">no phone, no digital footprint. I'll start with stealer logs</span>
+<span class="out">— if this person has ever been compromised, their email will</span>
+<span class="out">be in the database.</span>
+<span class="fn">CALL:</span> <span class="cmd">stealer_log_search(query="[name]", type="username")</span>
+<span class="fn">RESULT:</span> <span class="out">1 hit → email: ████████@hotmail.com</span>
+
+<span class="cm">─── STEP 2: Anomaly detected ───</span>
+<span class="def">REASONING:</span> <span class="out">The email doesn't match the target name. The</span>
+<span class="out">email domain contains a DIFFERENT name. This could mean</span>
+<span class="out">identity theft or a shared account. I need to investigate</span>
+<span class="out">both identities independently.</span>
+<span class="fn">CALL:</span> <span class="cmd">stealer_log_search(query="████████@hotmail.com", type="email")</span>
+<span class="fn">RESULT:</span> <span class="out">Platforms: MGM Resorts, Neiman Marcus, Epik...</span>
+<span class="out">→ luxury accounts inconsistent with reported income</span>
+
+<span class="cm">─── STEP 3: Identity resolution ───</span>
+<span class="def">REASONING:</span> <span class="out">The email owner appears to be a different person.</span>
+<span class="out">Let me search the leaked database for both names to see</span>
+<span class="out">which one has a real identity record.</span>
+<span class="fn">CALL:</span> <span class="cmd">leaked_db_search(name="[target]", state="target_state")</span>
+<span class="fn">RESULT:</span> <span class="out">0 results — target identity DOES NOT EXIST</span>
+
+<span class="fn">CALL:</span> <span class="cmd">leaked_db_search(name="[email owner]", state="target_state")</span>
+<span class="fn">RESULT:</span> <span class="out">1 result — CONFIRMED real person, DOB 1973,</span>
+<span class="out">CURP confirmed, registered address found</span>
+
+<span class="cm">─── STEP 4: Hypothesis formed ───</span>
+<span class="def">REASONING:</span> <span class="out">The target's operating name has zero records.</span>
+<span class="out">The email belongs to a confirmed real person. The target is</span>
+<span class="out">either using this person's email fraudulently, or IS this</span>
+<span class="out">person operating under a fabricated identity. I need to check</span>
+<span class="out">the RFC linked to the financial operations.</span>
+<span class="fn">CALL:</span> <span class="cmd">curp_rfc_decode(identifier="████770410██1")</span>
+<span class="fn">RESULT:</span> <span class="out">RFC decodes to: DOB April 10 1977 — does NOT match</span>
+<span class="out">either person. This RFC belongs to a THIRD individual.</span>
+
+<span class="cm">─── STEP 5: Third party identified ───</span>
+<span class="fn">CALL:</span> <span class="cmd">leaked_db_search(curp_prefix="████770410")</span>
+<span class="fn">RESULT:</span> <span class="out">Match: [associate], DOB 1977-04-10, CDMX origin</span>
+<span class="out">→ RFC legally belongs to this person, NOT the target</span>
+<span class="out">→ Shared RFC = financial fraud structure (prestanombres)</span>
+
+<span class="cm">─── STEP 6: Deceased identity detection ───</span>
+<span class="def">REASONING:</span> <span class="out">The target name still has no records. The surname</span>
+<span class="out">combination is rare in Mexico. If I search for ANYONE with</span>
+<span class="out">this surname pair, I might find the source of the identity.</span>
+<span class="fn">CALL:</span> <span class="cmd">leaked_db_search(name="[surname combo]", state="all")</span>
+<span class="fn">RESULT:</span> <span class="out">1 match: [elderly person], DOB 1930 — same rare</span>
+<span class="out">surname combination. Age 95. Likely deceased.</span>
+<span class="out">→ IDENTITY THEFT OF A DECEASED PERSON CONFIRMED</span></code></pre>
+            </div>
+
+            <p>A script would have stopped at step 1: "name found in stealer logs, here's the email."
+                The agent noticed the mismatch, investigated both identities, identified the RFC
+                belonging to a third person, and searched for the rare surname that led to the deceased
+                relative. Each step was a <em>decision</em>, not a predetermined action.</p>
+
+            <h2>The Human-AI Collaboration Model</h2>
+
+            <p>The agent is not a replacement for an analyst. It's a <strong>force multiplier</strong>
+                that handles the mechanical correlation work while the human focuses on what AI
+                can't do well:</p>
+
+            <div class="code-window">
+                <div class="code-titlebar">
+                    <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                    <span class="filename">division of labor</span>
+                </div>
+<pre><code><span class="def">AI AGENT EXCELS AT:</span>
+<span class="out"> [+] Cross-referencing identifiers across databases at scale</span>
+<span class="out"> [+] Detecting mismatches (email ≠ name, RFC ≠ owner)</span>
+<span class="out"> [+] Exhaustive enumeration (40+ services in seconds)</span>
+<span class="out"> [+] Pattern recognition across stealer log metadata</span>
+<span class="out"> [+] Family network reconstruction via naming conventions</span>
+<span class="out"> [+] Maintaining context across hundreds of data points</span>
+
+<span class="def">HUMAN ANALYST REQUIRED FOR:</span>
+<span class="out"> [+] IMINT / GEOINT (visual analysis, satellite imagery)</span>
+<span class="out"> [+] Judgment calls (is this identity theft or prestanombres?)</span>
+<span class="out"> [+] Legal and ethical boundaries (what CAN we query?)</span>
+<span class="out"> [+] Source validation (is this stealer log data reliable?)</span>
+<span class="out"> [+] Creative pivots (querying a car photo for geolocation)</span>
+<span class="out"> [+] Client communication and report writing</span>
+
+<span class="def">THE COLLABORATION:</span>
+<span class="cm"> Analyst provides: seed data, scope, and judgment</span>
+<span class="cm"> Agent provides: exhaustive correlation at machine speed</span>
+<span class="cm"> Analyst reviews: validates findings, directs follow-up</span>
+<span class="cm"> Agent executes: deeper queries based on analyst direction</span></code></pre>
+            </div>
+
+            <p>In the <a href="./osint-fullspectrum.html" style="color: var(--text-white);">full-spectrum
+                OSINT investigation</a>, the agent handled enumeration, stealer log correlation, and
+                family network mapping autonomously. But the IMINT analysis &mdash; recognizing
+                architectural style in a car photo, querying Overpass Turbo, and confirming via Google
+                Earth satellite imagery &mdash; required human visual analysis and creative reasoning
+                that no current AI handles reliably.</p>
+
+            <p>The ideal workflow is iterative: the agent produces an initial intelligence picture,
+                the analyst reviews it and identifies gaps or anomalies worth pursuing, then directs
+                the agent to dig deeper in specific directions. Each cycle compresses what would be
+                hours of manual work into minutes.</p>
+
+            <h2>Results Across Investigations</h2>
+
+            <p>The agent architecture has been deployed across multiple real-world engagements.
+                Here's the comparative impact:</p>
+
+            <div class="code-window">
+                <div class="code-titlebar">
+                    <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                    <span class="filename">agent performance across cases</span>
+                </div>
+<pre><code><span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="def"> CASE 1: USSS MOST WANTED (Kulkov / Try2check)</span>
+<span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="out"> Seed data:       Name + 3 aliases (from public wanted poster)</span>
+<span class="out"> Agent time:      ~12 minutes</span>
+<span class="out"> Manual estimate: 3-5 days</span>
+<span class="out"> Results:         SSN, vehicles, family, GPS coordinates</span>
+<span class="out"> Key pivot:       Stealer log → delivery app with GPS metadata</span>
+
+<span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="def"> CASE 2: FULL-SPECTRUM OSINT (Username → Physical Address)</span>
+<span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="out"> Seed data:       Single username</span>
+<span class="out"> Agent time:      ~8 minutes (correlation only)</span>
+<span class="out"> Manual estimate: 2-3 days</span>
+<span class="out"> Results:         25+ accounts, family tree, 2 vehicles, address</span>
+<span class="out"> Key pivot:       Steam name fragment → CURP → full identity</span>
+<span class="out"> Human required:  IMINT/GEOINT (car photo → satellite confirm)</span>
+
+<span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="def"> CASE 3: IDENTITY FRAUD (Name → Deceased Person Detection)</span>
+<span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="out"> Seed data:       Name only (no email, no phone)</span>
+<span class="out"> Agent time:      ~15 minutes</span>
+<span class="out"> Manual estimate: 1-2 weeks</span>
+<span class="out"> Results:         Fraud structure exposed, 30+ network members</span>
+<span class="out"> Key pivot:       Email mismatch → identity doesn't exist →</span>
+<span class="out">                  rare surname search → deceased person found</span>
+<span class="out"> Human required:  Legal judgment, CDR request authorization</span></code></pre>
+            </div>
+
+            <p>The consistent pattern: the agent compresses <strong>days or weeks of manual
+                correlation into minutes</strong>, while the human analyst handles the creative
+                pivots, legal boundaries, and final validation that require judgment.</p>
+
+            <h2>Why This Approach Matters</h2>
+
+            <p>The threat intelligence industry is moving toward AI-assisted analysis, but most
+                implementations are superficial &mdash; chatbots that summarize reports, or RAG
+                systems that retrieve relevant documents. Those are useful but limited.</p>
+
+            <p>What I've built is fundamentally different: an <strong>autonomous investigator</strong>
+                with direct tool access to real intelligence databases. The agent doesn't summarize
+                other people's findings &mdash; it generates its own by querying raw data sources
+                and reasoning about the results. This is the difference between an AI that reads
+                intelligence reports and an AI that <em>produces</em> them.</p>
+
+            <p>For organizations running OSINT at scale &mdash; threat intelligence firms, fraud
+                investigation units, law enforcement agencies &mdash; the implications are significant:</p>
+
+            <ul>
+                <li><strong>Analyst capacity multiplied</strong> &mdash; one analyst with agent support
+                    can handle the throughput of a 5-person team for correlation-heavy work</li>
+                <li><strong>Consistency</strong> &mdash; the agent checks every database, every time.
+                    Human analysts skip sources when pressed for time. The agent doesn't.</li>
+                <li><strong>Discovery of non-obvious connections</strong> &mdash; the identity fraud
+                    case was cracked because the agent searched for a rare surname across all states.
+                    A human analyst under time pressure might not have made that query.</li>
+                <li><strong>Institutional knowledge preservation</strong> &mdash; the investigation
+                    methodology is encoded in the tool definitions and agent prompts, not locked in
+                    a senior analyst's head</li>
+            </ul>
+
+            <p><strong>The agent architecture, tool layer, and data infrastructure described in this
+                post are proprietary.</strong> Available under commercial license for authorized
+                intelligence, law enforcement, and corporate investigation engagements.</p>
+
+        </article>
+
+        <footer>
+            <div class="footer-content">
+                <img src="./Image/Logo.jpg" alt="Logo" class="footer-logo">
+                <p class="copyright">&copy; 2024-2026 ALL RIGHTS RESERVED.</p>
+            </div>
+        </footer>
+    </main>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init();
+    </script>
+    <script type="module" src="/main.js"></script>
+</body>
+
+</html>

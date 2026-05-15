@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dead Man's Credentials: Exposing Identity Fraud Through OSINT | Offensive Security</title>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="./style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;900&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="cursor"></div>
+    <div class="cursor-follower"></div>
+    <div class="vignette"></div>
+
+    <nav>
+        <div class="nav-links">
+            <a href="./">MAIN</a>
+            <span class="separator">/</span>
+            <a href="./research.html" class="active">RESEARCH</a>
+            <span class="separator">/</span>
+            <a href="./writeups.html">WRITEUPS</a>
+            <span class="separator">/</span>
+            <a href="./#contact">CONTACT</a>
+        </div>
+    </nav>
+
+    <main class="content-page"
+        style="padding-top: 100px; max-width: 800px; margin: 0 auto; padding-left: 20px; padding-right: 20px;">
+        <article class="article-content" data-aos="fade-up">
+            <h1>Dead Man's Credentials: Exposing Identity Fraud Through OSINT Correlation</h1>
+            <div class="article-meta">APRIL 2026 &mdash; OSINT / FINANCIAL FRAUD / IDENTITY ANALYSIS / THREAT INTELLIGENCE</div>
+
+            <p>I was brought into an authorized engagement investigating financial irregularities
+                connected to political structures. The brief was minimal: a single name suspected of
+                operating under fraudulent identity documents, with possible ties to money laundering.
+                No email, no phone number, no confirmed address &mdash; just a name and a suspicion.</p>
+
+            <p>What followed was a complete OSINT-driven investigation that uncovered identity theft
+                of a <strong>deceased person</strong>, a shared tax identification number linking two
+                individuals in a financial fraud structure, luxury lifestyle inconsistent with reported
+                income, and a multi-generational family network enabling the operation.</p>
+
+            <p><strong>All names in this article have been changed.</strong> The methodology and
+                investigation workflow are real. This engagement was conducted under authorized scope
+                for a legitimate client.</p>
+
+            <h2>The Brief</h2>
+
+            <p>The target was operating under the name <strong>Marcos</strong> &mdash; a name
+                that appeared in financial documents connected to a political organization. The client
+                suspected irregularities but had no digital footprint, no confirmed identity documents,
+                and no way to verify whether this person was who they claimed to be.</p>
+
+            <p>The only actionable lead was the name itself and a general area of operations in a
+                central Mexican state. This is the kind of investigation where most analysts would
+                request more seed data. Instead, I started with what I had.</p>
+
+            <h2>Phase 1: Stealer Log Pivot</h2>
+
+            <p>The first move was running the target name through my stealer log database &mdash;
+                the same indexed pipeline of compromised credentials described in my
+                <a href="./osint-fullspectrum.html" style="color: var(--text-white);">full-spectrum
+                OSINT methodology</a>. The name alone isn't a great search key, but combined with
+                the geographic area, it produced a single hit:</p>
+
+            <div class="code-window terminal">
+                <div class="code-titlebar">
+                    <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                    <span class="filename">stealer log query</span>
+                </div>
+<pre><code><span class="prompt">[query]</span> <span class="cmd">name: "Marcos" + region: central MX</span>
+
+<span class="out"> [+] Match: fernando_dom@hotmail.com</span>
+<span class="out">     Password: ██████████ (variant: ██████████)</span>
+<span class="out">     IP: ███.███.██.██ (central Mexico)</span>
+<span class="out">     Hash: ████████████████████==</span>
+
+<span class="cm"># Cross-referencing email against breach databases:</span>
+<span class="out"> [+] MGM Resorts         — luxury hotel/casino chain — ACTIVE ACCOUNT</span>
+<span class="out"> [+] Neiman Marcus       — luxury retail — compromised May 2024</span>
+<span class="out"> [+] Epik               — domain registrar — COMPROMISED</span>
+<span class="out"> [+] FanDeApple          — user: fdominguez — IP: ███.███.██.██</span>
+<span class="out">                           last activity: 2012</span>
+
+<span class="cm"># CRITICAL: Luxury platforms (MGM, Neiman Marcus) with reported</span>
+<span class="cm"># income of ~$2,500 USD/month = financial anomaly indicator</span></code></pre>
+            </div>
+
+            <p>Two immediate findings:</p>
+
+            <ol>
+                <li><strong>The email didn't match the target name.</strong> The target was operating
+                    as "Marcos" but the email domain contained a completely different name
+                    &mdash; "Fernando." This was the first indicator that the operating identity might
+                    not be real.</li>
+                <li><strong>Luxury platform access on modest income.</strong> Active accounts on MGM
+                    Resorts (casino/hotel chain) and Neiman Marcus (high-end retail) are inconsistent
+                    with a reported monthly income of approximately $2,500 USD. This pattern &mdash;
+                    access to luxury services that don't match declared earnings &mdash; is a textbook
+                    indicator of unreported income or money laundering.</li>
+            </ol>
+
+            <h2>Phase 2: The Identity Mismatch</h2>
+
+            <p>The email was the key. If the target is operating as "Marcos" but using an email
+                that clearly belongs to "Fernando," one of two things is happening: either Fernando is
+                an alias, or the target is using someone else's identity.</p>
+
+            <p>I searched the leaked database for the email address and found a match: <strong>Fernando</strong>
+                was a real person &mdash; confirmed identity, confirmed date of birth (1973), born in a
+                southern Mexican state but registered in the target's area of operations. His registered
+                address was at a residential address I'll call <strong>Location Alpha</strong>.</p>
+
+            <p>But here's the critical finding: <strong>the target "Marcos" was not found in any
+                database.</strong> No identity record, no registration, nothing. The name simply didn't
+                exist as a registered person in the state where he was supposedly operating.</p>
+
+            <div class="code-window terminal">
+                <div class="code-titlebar">
+                    <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                    <span class="filename">identity cross-reference</span>
+                </div>
+<pre><code><span class="cm"># Search for target operating name in leaked database</span>
+<span class="prompt">[search]</span> <span class="cmd">name: "Marcos" + state: target region</span>
+<span class="out">  &rarr; 0 results</span>
+
+<span class="cm"># Search for email owner</span>
+<span class="prompt">[search]</span> <span class="cmd">email: fernando_dom@hotmail.com</span>
+<span class="out">  &rarr; 1 result: Fernando</span>
+<span class="out">     DOB: 1973-12-02</span>
+<span class="out">     Birth state: southern Mexico (code 12)</span>
+<span class="out">     CURP: ██████████████████</span>
+<span class="out">     Registered address: Location Alpha (residential)</span>
+<span class="out">     Electoral key: confirmed</span>
+
+<span class="cm"># CONCLUSION: "Marcos" does not exist in any database.</span>
+<span class="cm"># The email used by "Marcos" belongs to a real, different person.</span>
+<span class="cm"># Two possibilities: identity theft or prestanombres (straw man)</span></code></pre>
+            </div>
+
+            <p>This raised the central question: if "Marcos" doesn't exist and is using
+                Fernando's email, is Fernando aware of this? Is Fernando a victim, a willing participant,
+                or is "Marcos" actually Fernando operating under a fabricated identity?</p>
+
+            <h2>Phase 3: CURP/RFC Forensics &mdash; The Shared Tax ID</h2>
+
+            <p>The next lead was the RFC (Registro Federal de Contribuyentes &mdash; Mexico's tax
+                identification number) associated with the financial operations. The RFC linked to
+                "Marcos" was <code>█████████████</code>.</p>
+
+            <p>I ran this RFC through the CURP/RFC cross-referencing technique: in Mexico, the first
+                10 characters of both identifiers are identical for any given person, encoding their
+                name initials and date of birth. This means an RFC can be traced back to its legal
+                owner with zero ambiguity.</p>
+
+            <div class="code-window">
+                <div class="code-titlebar">
+                    <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                    <span class="filename">RFC ownership analysis</span>
+                </div>
+<pre><code><span class="cm">RFC linked to "Marcos":  █████████████</span>
+<span class="cm">First 10 characters:       ██████████</span>
+<span class="cm">Decoded: birthdate = April 10, 1977</span>
+
+<span class="cm">Leaked database search for matching CURP prefix:</span>
+<span class="cm">&rarr; MATCH: Valentina</span>
+<span class="cm">   CURP: ██████████M██████07</span>
+<span class="cm">   DOB:  April 10, 1977</span>
+<span class="cm">   Address: Location Beta (same city as target operations)</span>
+
+<span class="cm">CRITICAL FINDING:</span>
+<span class="cm">   The RFC does NOT belong to "Marcos"</span>
+<span class="cm">   The RFC does NOT belong to Fernando</span>
+<span class="cm">   The RFC legally belongs to VALENTINA</span>
+<span class="cm">   &rarr; Shared RFC = financial fraud structure confirmed</span></code></pre>
+            </div>
+
+            <p>The RFC being used for "Marcos'" financial operations legally belonged to a
+                third person &mdash; <strong>Valentina</strong>, a woman born in Mexico City in 1977.
+                Her registered address was in the same city as the target's area of operations. This
+                confirmed a <em>prestanombres</em> (straw man) structure: Valentina's tax identity was
+                being used to conduct financial operations under a fabricated name.</p>
+
+            <p>Valentina's phone records were obtained through authorized legal channels (CDR request
+                to the carrier), revealing call patterns, IMEI data, and communication with numbers
+                linked to the operation:</p>
+
+            <div class="code-window terminal">
+                <div class="code-titlebar">
+                    <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                    <span class="filename">CDR analysis summary</span>
+                </div>
+<pre><code><span class="cm"># Call Detail Records — Valentina's line</span>
+<span class="cm"># Period: Dec 2025 — Mar 2026</span>
+<span class="prompt">[CDR]</span> <span class="cmd">77,000+ records analyzed</span>
+
+<span class="out"> Line type:     Postpaid (contract)</span>
+<span class="out"> IMEI:          ██████████████ (single device)</span>
+<span class="out"> IMSI changes:  10 SIM swaps in 3 months</span>
+<span class="out"> Carrier:       Major Mexican carrier</span>
+
+<span class="cm"># Communication pattern analysis:</span>
+<span class="out"> Top contacts:  3 numbers with 80%+ of outbound calls</span>
+<span class="out"> Data sessions: Heavy — consistent with smartphone + apps</span>
+<span class="out"> IMS/VoLTE:     Active — modern device confirmed</span>
+<span class="out"> Geographic:    All tower data within target state</span>
+
+<span class="cm"># KEY: 10 IMSI changes (SIM swaps) in 90 days is abnormal</span>
+<span class="cm"># Pattern consistent with operational security awareness</span>
+<span class="cm"># or deliberate counter-surveillance behavior</span></code></pre>
+            </div>
+
+            <p>The CDR data confirmed that Valentina's phone line was active and operating within the
+                target region. The unusually high number of SIM swaps (10 in three months) suggested
+                either counter-surveillance awareness or device sharing &mdash; both indicators of
+                non-standard phone usage consistent with operational activity.</p>
+
+            <h2>Phase 4: The Deceased Connection</h2>
+
+            <p>If "Marcos" doesn't exist in any database, where did the identity come from?
+                The surname used by the target was distinctive &mdash; rare enough in Mexico that any
+                other person with the same surname combination would almost certainly be a relative.</p>
+
+            <p>I searched the leaked database for the exact surname combination used by
+                "Marcos" and found a single match: <strong>Carmen</strong>, born in
+                <strong>1930</strong>.</p>
+
+            <div class="code-window terminal">
+                <div class="code-titlebar">
+                    <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                    <span class="filename">surname analysis</span>
+                </div>
+<pre><code><span class="cm"># Search for target's surname combination in leaked database</span>
+<span class="prompt">[search]</span> <span class="cmd">surname_combination: [REDACTED] + state: all</span>
+
+<span class="out"> &rarr; 1 result:</span>
+<span class="out">    Name: Carmen [REDACTED]</span>
+<span class="out">    DOB: December 5, 1930</span>
+<span class="out">    Age: 95 (if alive)</span>
+<span class="out">    Address: historic city center, same state</span>
+<span class="out">    Electoral key: confirmed (old registration)</span>
+
+<span class="cm"># The surname combination is EXTREMELY RARE in Mexico</span>
+<span class="cm"># Two people sharing it = confirmed family relationship</span>
+<span class="cm"># Carmen is likely grandmother or great-aunt of target</span>
+
+<span class="cm"># CONCLUSION:</span>
+<span class="cm"># "Marcos" is using the surname of a 95-year-old woman</span>
+<span class="cm"># who is either deceased or incapacitated.</span>
+<span class="cm"># The identity was fabricated using a real family's rare surname</span>
+<span class="cm"># to create documents that appear legitimate on surface checks.</span></code></pre>
+            </div>
+
+            <p>This was the breakthrough. The identity "Marcos" was constructed using the
+                surname of a real family &mdash; specifically, an elderly woman born in 1930 who shares
+                the exact rare surname combination. In Mexico, certain surname pairs are so uncommon
+                that finding two unrelated people with the same combination is statistically negligible.
+                Carmen was almost certainly a grandmother or great-aunt whose identity documents were
+                repurposed.</p>
+
+            <p>The fraud structure was now clear:</p>
+
+            <ul>
+                <li><strong>Fernando</strong> (born 1973) is the real person behind the operation,
+                    confirmed by the email linkage</li>
+                <li><strong>"Marcos"</strong> is a fabricated identity using the surname of
+                    Carmen's family &mdash; a deceased or incapacitated elderly relative</li>
+                <li><strong>Valentina</strong> provides the tax identity (RFC) for financial operations,
+                    functioning as the <em>prestanombres</em> (straw man) in the structure</li>
+            </ul>
+
+            <h2>Phase 5: Network Reconstruction</h2>
+
+            <p>With Fernando's confirmed identity, I mapped his family network using the same
+                naming-convention technique from my other investigations. Mexican surnames are
+                deterministic &mdash; searching the maternal surname as <em>paterno</em> and
+                vice versa reconstructs the family tree across generations.</p>
+
+            <div class="code-window terminal">
+                <div class="code-titlebar">
+                    <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                    <span class="filename">family network reconstruction</span>
+                </div>
+<pre><code><span class="cm"># Maternal family branch — leaked database search</span>
+<span class="prompt">[search]</span> <span class="cmd">maternal_surname as paterno + target state</span>
+<span class="out">  &rarr; 15+ results</span>
+
+<span class="cm"># Key findings:</span>
+<span class="out"> Maternal aunt #1:    born 1957 — same municipality as operations HQ</span>
+<span class="out"> Maternal uncle #1:   born 1955 — same address as aunt</span>
+<span class="out"> Cousin branch A:     2 siblings — shared address (same household)</span>
+<span class="out"> Cousin branch B:     2 siblings — different municipality</span>
+<span class="out"> Extended branch:     6+ members scattered across 4 municipalities</span>
+
+<span class="cm"># PATTERN: Maternal family concentrated in the same city</span>
+<span class="cm"># as the target's primary area of operations.</span>
+<span class="cm"># Fernando migrated FROM southern Mexico TO this city</span>
+<span class="cm"># — his maternal family was already established there.</span>
+
+<span class="cm"># Address cluster analysis:</span>
+<span class="out"> Location Alpha:      Fernando's registered address — residential zone</span>
+<span class="out"> Location Beta:       Valentina's address — same city, 4km away</span>
+<span class="out"> Location Gamma:      Operations HQ — commercial district, different city</span>
+<span class="out"> Location Delta:      Secondary address — multi-unit complex</span>
+<span class="out">                      6 other residents at same complex (mapped)</span></code></pre>
+            </div>
+
+            <p>The family analysis revealed that Fernando was born in a southern state but migrated to
+                the target region, where his maternal family was already established. This migration
+                pattern, combined with the geographic clustering of family members near his operations
+                center, provided context for how the fraud network was logistically supported.</p>
+
+            <p>The secondary address (Location Delta) turned out to be a multi-unit residential complex
+                with six other registered residents, including foreign nationals &mdash; suggesting a
+                high-end condominium development, not a typical residential neighborhood. This was
+                inconsistent with the reported income level and further supported the financial anomaly
+                hypothesis.</p>
+
+            <h2>Phase 6: Connecting the Structure</h2>
+
+            <p>Valentina's family was mapped using the same technique. Her surname was also
+                distinctive, and the leaked database revealed 14+ family members across the state,
+                including:</p>
+
+            <ul>
+                <li>A brother living in the same city</li>
+                <li>Multiple cousins across four neighborhoods</li>
+                <li>Carmen (born 1930) &mdash; sharing the exact rare surname combination used by
+                    the fabricated identity "Marcos"</li>
+                <li>A variant spelling of the surname appearing in several records &mdash; same
+                    family, different transcription</li>
+            </ul>
+
+            <p>This confirmed that "Marcos" was constructed from Valentina's family tree.
+                The fabricated identity used the surname of Valentina's elderly relative (Carmen),
+                while Valentina provided the RFC for financial operations. Fernando provided the
+                operational capability &mdash; the email, the accounts, the digital infrastructure.</p>
+
+            <div class="code-window">
+                <div class="code-titlebar">
+                    <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                    <span class="filename">fraud structure — confirmed</span>
+                </div>
+<pre><code><span class="str">"Marcos"</span> (fabricated identity)
+  <span class="cm">│</span>
+  <span class="cm">├──</span> <span class="fn">Real Operator</span>: <span class="out">Fernando (born 1973)</span>
+  <span class="cm">│     ├──</span> Email: fernando_dom@hotmail.com
+  <span class="cm">│     ├──</span> Born: southern Mexico, migrated to target state
+  <span class="cm">│     ├──</span> Registered: Location Alpha (residential)
+  <span class="cm">│     └──</span> Maternal family network in operations area
+  <span class="cm">│</span>
+  <span class="cm">├──</span> <span class="fn">Stolen Identity Source</span>: <span class="out">Carmen (born 1930)</span>
+  <span class="cm">│     ├──</span> Same rare surname as "Marcos"
+  <span class="cm">│     ├──</span> Elderly/deceased — identity repurposed
+  <span class="cm">│     └──</span> Family connection to Valentina confirmed
+  <span class="cm">│</span>
+  <span class="cm">├──</span> <span class="fn">Financial Front</span>: <span class="out">Valentina (born 1977)</span>
+  <span class="cm">│     ├──</span> RFC: █████████████ (used for "Marcos'" operations)
+  <span class="cm">│     ├──</span> CURP first 10 chars match RFC exactly
+  <span class="cm">│     ├──</span> Lives 4km from Fernando (Location Beta)
+  <span class="cm">│     └──</span> CDR: 10 SIM swaps in 90 days (counter-surveillance)
+  <span class="cm">│</span>
+  <span class="cm">└──</span> <span class="fn">Financial Anomalies</span>
+        <span class="cm">├──</span> Reported income: ~$2,500 USD/month
+        <span class="cm">├──</span> MGM Resorts account (luxury casino/hotel)
+        <span class="cm">├──</span> Neiman Marcus account (luxury retail)
+        <span class="cm">├──</span> Multiple properties in different cities
+        <span class="cm">└──</span> Multi-unit condo at Location Delta</code></pre>
+            </div>
+
+            <h2>Intelligence Summary</h2>
+
+            <div class="code-window">
+                <div class="code-titlebar">
+                    <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                    <span class="filename">INTEL REPORT &mdash; FRAUD STRUCTURE ANALYSIS</span>
+                </div>
+<pre><code><span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="def"> IDENTITY FRAUD — CONFIRMED</span>
+<span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="out"> Operating alias:      "Marcos" — DOES NOT EXIST in any database</span>
+<span class="out"> Real operator:        Fernando (DOB: 1973)</span>
+<span class="out"> Identity source:      Carmen (DOB: 1930) — deceased/incapacitated</span>
+<span class="out"> Linkage method:       Email used by "Marcos" belongs to Fernando</span>
+<span class="out"> Surname analysis:     Rare combination shared only with Carmen</span>
+<span class="str"> Confidence:           HIGH</span>
+
+<span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="def"> FINANCIAL FRAUD — CONFIRMED</span>
+<span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="out"> RFC used:             █████████████</span>
+<span class="out"> RFC legal owner:      Valentina (DOB: April 10, 1977)</span>
+<span class="out"> RFC used by:          "Marcos" (fabricated identity)</span>
+<span class="out"> Proof:                RFC first 10 chars = Valentina's CURP prefix</span>
+<span class="out"> Structure:            Prestanombres (straw man) arrangement</span>
+<span class="str"> Confidence:           HIGH</span>
+
+<span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="def"> FINANCIAL ANOMALY — INDICATOR</span>
+<span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="out"> Declared income:      ~$2,500 USD/month</span>
+<span class="out"> MGM Resorts:          Active account (luxury casino/hotel chain)</span>
+<span class="out"> Neiman Marcus:        Compromised in May 2024 breach (luxury retail)</span>
+<span class="out"> Properties:           3+ addresses across 2 cities</span>
+<span class="out"> Residence type:       Multi-unit condo complex (Location Delta)</span>
+<span class="out"> Assessment:           Income inconsistent with lifestyle indicators</span>
+<span class="str"> Confidence:           MEDIUM-HIGH</span>
+
+<span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="def"> LOCATIONS — 4 CONFIRMED</span>
+<span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="out"> Location Alpha:       Fernando's registered address (residential)</span>
+<span class="out"> Location Beta:        Valentina's registered address (4km from Alpha)</span>
+<span class="out"> Location Gamma:       Operations HQ (commercial district, 2nd city)</span>
+<span class="out"> Location Delta:       Multi-unit condo — 6+ co-residents mapped</span>
+<span class="str"> Source:               Leaked database + CDR geolocation</span>
+
+<span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="def"> NETWORK — 30+ INDIVIDUALS MAPPED</span>
+<span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="out"> Fernando's family:    15+ members (maternal branch in target state)</span>
+<span class="out"> Valentina's family:   14+ members (rare surname — full tree mapped)</span>
+<span class="out"> Location Delta:       6 co-residents (including foreign nationals)</span>
+<span class="out"> CDR contacts:         3 primary numbers identified</span>
+<span class="str"> Source:               Leaked database + naming convention analysis + CDR</span>
+
+<span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="def"> COLLECTION TECHNIQUES</span>
+<span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
+<span class="out"> [1] Stealer log correlation (name &rarr; email &rarr; platforms)</span>
+<span class="out"> [2] Breach database cross-referencing (luxury lifestyle indicators)</span>
+<span class="out"> [3] CURP/RFC forensic analysis (tax ID ownership tracing)</span>
+<span class="out"> [4] Leaked database analysis (identity confirmation + family mapping)</span>
+<span class="out"> [5] Mexican naming convention family reconstruction</span>
+<span class="out"> [6] CDR analysis (77,000+ records — call patterns + SIM behavior)</span>
+<span class="out"> [7] Address clustering and co-resident mapping</span>
+<span class="out"> [8] Deceased person identity theft detection</span></code></pre>
+            </div>
+
+            <h2>Why This Matters</h2>
+
+            <p>This investigation started with <strong>nothing but a name</strong> and produced a
+                complete fraud structure analysis: the real person behind the fabricated identity,
+                the deceased relative whose identity was stolen, the financial associate providing
+                tax cover, and the lifestyle indicators confirming unreported income. Every finding
+                was derived from OSINT sources and authorized legal instruments (CDR).</p>
+
+            <p>The techniques that made this possible:</p>
+
+            <ul>
+                <li><strong>Stealer logs as a first pivot</strong> &mdash; even when you have nothing
+                    but a name, compromised credential databases can surface an email, which unlocks
+                    everything else</li>
+                <li><strong>Email-to-identity mismatch detection</strong> &mdash; when the email
+                    domain doesn't match the operating name, investigate both identities independently</li>
+                <li><strong>RFC/CURP forensic tracing</strong> &mdash; Mexico's tax ID structure makes
+                    it trivial to identify the legal owner of any RFC, exposing straw man arrangements</li>
+                <li><strong>Rare surname exploitation</strong> &mdash; uncommon surname combinations
+                    in Mexico make family connections deterministic, enabling deceased identity theft
+                    detection</li>
+                <li><strong>CDR behavioral analysis</strong> &mdash; SIM swap frequency, contact
+                    patterns, and geographic data reveal operational security behaviors that normal
+                    phone usage doesn't exhibit</li>
+            </ul>
+
+            <p>For fraud investigators: the combination of stealer log intelligence + government
+                identifier forensics (CURP/RFC) is devastatingly effective in Mexico. The shared
+                prefix between CURP and RFC means that any financial document can be traced to its
+                true owner, regardless of what name appears on the operation. This is the kind of
+                correlation that manual investigation misses because it requires cross-referencing
+                across datasets that aren't normally queried together.</p>
+
+            <p><strong>The tooling and methodology described in this post are available under
+                commercial license for authorized law enforcement, intelligence, and corporate
+                investigation engagements.</strong></p>
+
+        </article>
+
+        <footer>
+            <div class="footer-content">
+                <img src="./Image/Logo.jpg" alt="Logo" class="footer-logo">
+                <p class="copyright">&copy; 2024-2026 ALL RIGHTS RESERVED.</p>
+            </div>
+        </footer>
+    </main>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init();
+    </script>
+    <script type="module" src="/main.js"></script>
+</body>
+
+</html>
