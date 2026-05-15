@@ -247,14 +247,14 @@
 
 <span class="cm">Given an RFC from financial records:</span>
 <span class="cm">  → Extract first 10 characters</span>
-<span class="cm">  → Search voter registration database for matching CURP prefix</span>
+<span class="cm">  → Search leaked database for matching CURP prefix</span>
 <span class="cm">  → Confirmed identity link with zero ambiguity</span></code></pre>
             </div>
 
-            <p>Once the CURP is confirmed, the voter registration record provides the registered address, birth
-                state, and electoral section. The electoral section (<code>secci&oacute;n</code>) is particularly
-                valuable &mdash; it maps to a specific geographic area of a few city blocks. Two people sharing
-                the same section number are confirmed neighbors.</p>
+            <p>Once the CURP is confirmed, the leaked record provides the registered address and birth
+                state. Geographic clustering within the dataset is particularly
+                valuable &mdash; two people registered at the same address or nearby addresses are confirmed
+                household members or neighbors.</p>
 
             <h3>Family Network Reconstruction</h3>
 
@@ -281,10 +281,10 @@
                     <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
                     <span class="filename">family network reconstruction</span>
                 </div>
-<pre><code><span class="cm"># INE database search — target surname as paterno in Coahuila</span>
+<pre><code><span class="cm"># Leaked database search — target surname as paterno in Coahuila</span>
 <span class="prompt">$</span> <span class="cmd">findstr /I "CU████R" "D:\Bases de Datos Mexico\COA\COA.csv"</span>
 <span class="out">  → 47 results in Coahuila state</span>
-<span class="out">  → 6 share the same electoral section (confirmed family cluster)</span>
+<span class="out">  → 6 share the same address cluster (confirmed family group)</span>
 
 <span class="cm"># Cross-reference: address search for household composition</span>
 <span class="prompt">$</span> <span class="cmd">findstr /I "GARZAS.*325" "D:\Bases de Datos Mexico\COA\COA.csv"</span>
@@ -357,7 +357,7 @@
                     carport canopy, specific window pattern) is consistent with <em>fraccionamientos populares</em>
                     common in Coahuila's urban sprawl. The concrete tile paving pattern is a northern Mexico
                     regional indicator.</li>
-                <li><strong>Known city from prior intelligence</strong> &mdash; stealer log IP + voter registration
+                <li><strong>Known city from prior intelligence</strong> &mdash; stealer log IP + leaked records
                     had already confirmed Ramos Arizpe / Monclova area. This narrowed from "anywhere in Mexico"
                     to a specific municipality.</li>
                 <li><strong>Overpass Turbo query</strong> &mdash; using OpenStreetMap data to identify residential
@@ -389,12 +389,12 @@
                 <img src="./Image/osint/satellite-annotated.png" alt="GEOINT satellite confirmation"
                     style="width: 100%; max-width: 500px; border-radius: 4px; border: 1px solid rgba(100,1,0,0.3); display: block; margin: 0 auto;">
                 <p style="color: var(--text-gray); font-size: 0.8rem; margin-top: 0.5rem; text-align: center;">
-                    Satellite imagery confirmation &mdash; target residence cross-referenced against voter registry address</p>
+                    Satellite imagery confirmation &mdash; target residence cross-referenced against leaked database address</p>
             </div>
 
             <p>The satellite view confirmed the residential development type, street layout, and building
                 positioning. This converted a social media car photo into a <strong>confirmed physical
-                address</strong>, independently validating the voter registration data from Phase 3.</p>
+                address</strong>, independently validating the leaked database records from Phase 3.</p>
 
             <h2>The Complete Pipeline</h2>
 
@@ -419,7 +419,7 @@
   <span class="cm">│     ├──</span> 3 emails on same IP (household members)
   <span class="cm">│     └──</span> Saved credentials confirming account ownership
   <span class="cm">│</span>
-  <span class="cm">├──</span> <span class="fn">Government Records</span> <span class="cm">→ CURP / RFC / INE</span>
+  <span class="cm">├──</span> <span class="fn">Government Records</span> <span class="cm">→ CURP / RFC / leaked records</span>
   <span class="cm">│     ├──</span> CURP: CU██03████HCL████3 (DOB confirmed)
   <span class="cm">│     ├──</span> Address: AV LAS ██████ ███, COL EL ██████
   <span class="cm">│     ├──</span> Parents: V██████ (b.19██) + MA. T██████ (b.19██)
@@ -438,7 +438,7 @@
 
             <p>The final product was a complete intelligence profile: full legal identity with CURP/RFC,
                 family network across three households in two cities, two vehicles identified, 25+ online
-                accounts enumerated, confirmed physical address cross-validated via voter registry + satellite
+                accounts enumerated, confirmed physical address cross-validated via leaked records + satellite
                 imagery, and a digital footprint spanning from 2019 to present across gaming, social media,
                 and messaging platforms &mdash; all from the seed input <code>ElMissu</code>.</p>
 
@@ -462,7 +462,7 @@
 <span class="out"> Phone:         +52 844 ███ ████</span>
 <span class="out"> Primary Email: missael*****@gmail.com</span>
 <span class="out"> Secondary:     elm████@hotmail.com</span>
-<span class="str"> Source:        Enumeration engine + stealer logs + INE</span>
+<span class="str"> Source:        Enumeration engine + stealer logs + leaked records</span>
 
 <span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
 <span class="def"> LOCATIONS</span>
@@ -471,7 +471,7 @@
 <span class="out"> Secondary:     C ██████ ███, FRACC ██████, Saltillo</span>
 <span class="out"> Tertiary:      C ████████ ███, FRACC ████, Saltillo</span>
 <span class="out"> IP Geoloc:     189.218.██.██ → Ramos Arizpe, COAH</span>
-<span class="str"> Source:        INE voter registry + stealer log IP + IMINT</span>
+<span class="str"> Source:        Leaked database + stealer log IP + IMINT</span>
 
 <span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
 <span class="def"> FAMILY NETWORK</span>
@@ -482,7 +482,7 @@
 <span class="out"> Brother #2:    A.J. Cu████ He██████  (b.1994)</span>
 <span class="out"> Brother #3:    D. Cu████ He██████  (b.1997)</span>
 <span class="out"> Extended:      Lu██-Cu████ branch — 5 members in Saltillo</span>
-<span class="str"> Source:        INE database + CURP naming convention analysis</span>
+<span class="str"> Source:        Leaked database + CURP naming convention analysis</span>
 
 <span class="cm">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span>
 <span class="def"> VEHICLES</span>
@@ -509,7 +509,7 @@
 <span class="out"> [2] SSL pinning bypass (Frida + Android Studio)</span>
 <span class="out"> [3] Automated stealer log scraping (Telegram → PostgreSQL)</span>
 <span class="out"> [4] AI-assisted database correlation</span>
-<span class="out"> [5] INE voter registry analysis (findstr + CURP/RFC xref)</span>
+<span class="out"> [5] Leaked database analysis (findstr + CURP/RFC xref)</span>
 <span class="out"> [6] Mexican naming convention family reconstruction</span>
 <span class="out"> [7] Facebook API embedded URL search engine</span>
 <span class="out"> [8] IMINT / architectural analysis</span>
