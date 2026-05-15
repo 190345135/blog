@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Full-Spectrum OSINT: From Username to Physical Address | Offensive Security</title>
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="./style.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;900&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="cursor"></div>
+    <div class="cursor-follower"></div>
+    <div class="vignette"></div>
+
+    <nav>
+        <div class="nav-links">
+            <a href="/">MAIN</a>
+            <span class="separator">/</span>
+            <a href="/research.html" class="active">RESEARCH</a>
+            <span class="separator">/</span>
+            <a href="/writeups.html">WRITEUPS</a>
+            <span class="separator">/</span>
+            <a href="/#contact">CONTACT</a>
+        </div>
+    </nav>
+
+    <main class="content-page"
+        style="padding-top: 100px; max-width: 800px; margin: 0 auto; padding-left: 20px; padding-right: 20px;">
+        <article class="article-content" data-aos="fade-up">
+            <h1>Full-Spectrum OSINT: From Username to Physical Address</h1>
+            <div class="article-meta">JANUARY 2026 &mdash; OSINT / INTELLIGENCE METHODOLOGY / API RESEARCH / GEOINT</div>
+
+            <p>Most OSINT practitioners stop at social media accounts and breached credentials. That's the first
+                15 minutes. The real intelligence value starts when you correlate digital footprints against government
+                records, leaked databases, and physical-world indicators to build a complete profile that includes
+                family networks, vehicle registrations, and confirmed physical addresses.</p>
+
+            <p>This article walks through a real investigation (fully anonymized) where a single username was
+                escalated to a complete intelligence profile including family tree, multiple physical locations,
+                vehicle identification, and IMINT-confirmed geolocation &mdash; using a custom OSINT platform
+                I built specifically for the Mexican digital ecosystem.</p>
+
+            <p><strong>The investigation described here was conducted under authorized scope for a legitimate
+                engagement.</strong> All identifying information has been sanitized.</p>
+
+            <h2>Phase 1: Building the Enumeration Engine</h2>
+
+            <p>Commercial OSINT platforms like OSINT Industries work well for US/EU targets, but their coverage
+                of Mexican services is almost nonexistent. Latin American social networks, government portals,
+                and regional platforms aren't indexed by any commercial tool. So I built my own.</p>
+
+            <p>The architecture takes <a href="https://github.com/megadose/holehe" target="_blank" rel="noopener"
+                style="color: var(--text-white);">holehe</a> and
+                <a href="https://github.com/mxrch/GHunt" target="_blank" rel="noopener"
+                style="color: var(--text-white);">GHunt</a> as conceptual baselines &mdash; both enumerate
+                service registrations by exploiting password reset, login, and registration API responses that
+                leak whether an account exists. I extended this approach to 40+ Mexican and Latin American services.</p>
+
+            <h3>API Reverse Engineering via Burp Suite</h3>
+
+            <p>For web applications, the process is straightforward: intercept the authentication flow with
+                Burp Suite, identify the API endpoint that handles login or password reset, and analyze the
+                response differential between existing and non-existing accounts.</p>
+
+            <div class="code-window terminal">
+                <div class="code-titlebar">
+                    <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                    <span class="filename">API response analysis</span>
+                </div>
+<pre><code><span class="cm"># Account exists — API leaks confirmation</span>
+<span class="prompt">POST</span> <span class="cmd">/api/v1/auth/recover</span>
+<span class="out">→ 200 {"status": "recovery_sent", "hint": "m***@gmail.com"}</span>
+
+<span class="cm"># Account does not exist</span>
+<span class="prompt">POST</span> <span class="cmd">/api/v1/auth/recover</span>
+<span class="out">→ 404 {"error": "user_not_found"}</span>
+
+<span class="cm"># Some services also leak partial email/phone in the response</span>
+<span class="cm"># This is an enumeration vector + partial PII disclosure</span></code></pre>
+            </div>
+
+            <p>Many services return different HTTP status codes, different JSON structures, or even different
+                response times for existing vs non-existing accounts. The enumeration engine catalogs these
+                differentials and automates the check across all indexed services for any given email, phone
+                number, or username.</p>
+
+            <h3>SSL Pinning Bypass for Mobile APIs</h3>
+
+            <p>The interesting targets are mobile-only applications. Many Mexican services have well-protected
+                web APIs but ship mobile apps with <strong>unprotected API endpoints</strong> that expose far
+                more data than the web version. The problem is that modern Android apps implement SSL certificate
+                pinning, which prevents Burp Suite from intercepting HTTPS traffic.</p>
+
+            <p>I use Android Studio with a rooted emulator and Frida to bypass SSL pinning at runtime. Once
+                pinning is defeated, the full API surface of the mobile app is visible in Burp:</p>
+
+            <div class="code-window">
+                <div class="code-titlebar">
+                    <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                    <span class="filename">frida_ssl_bypass.js</span>
+                </div>
+<pre><code><span class="fn">Java</span>.<span class="fn">perform</span>(<span class="kw">function</span>() {
+    <span class="kw">var</span> TrustManager = <span class="fn">Java</span>.<span class="fn">registerClass</span>({
+        <span class="def">name</span>: <span class="str">'com.custom.TrustAllCerts'</span>,
+        <span class="def">implements</span>: [<span class="fn">Java</span>.<span class="fn">use</span>(<span class="str">'javax.net.ssl.X509TrustManager'</span>)],
+        <span class="def">methods</span>: {
+            <span class="fn">checkClientTrusted</span>: <span class="kw">function</span>(chain, authType) {},
+            <span class="fn">checkServerTrusted</span>: <span class="kw">function</span>(chain, authType) {},
+            <span class="fn">getAcceptedIssuers</span>: <span class="kw">function</span>() { <span class="kw">return</span> []; }
+        }
+    });
+
+    <span class="kw">var</span> SSLContext = <span class="fn">Java</span>.<span class="fn">use</span>(<span class="str">'javax.net.ssl.SSLContext'</span>);
+    <span class="kw">var</span> ctx = SSLContext.<span class="fn">getInstance</span>(<span class="str">'TLS'</span>);
+    ctx.<span class="fn">init</span>(<span class="kw">null</span>, [TrustManager.$new()], <span class="kw">null</span>);
+
+    <span class="cm">// All HTTPS traffic now flows through Burp</span>
+    <span class="cm">// Mobile API endpoints are fully visible</span>
+});</code></pre>
+            </div>
+
+            <p>Through this process I discovered that several Mexican services expose endpoints that return
+                full profile data (name, registration date, linked accounts) given just a phone number or
+                email &mdash; information that's completely hidden in the web interface. These become high-value
+                enumeration sources.</p>
+
+            <h2>Phase 2: Stealer Log Intelligence</h2>
+
+            <p>Stealer logs are the most underutilized intelligence source in OSINT. Infostealers like
+                RedLine, Raccoon, and Vidar harvest saved credentials, cookies, autofill data, and system
+                information from compromised machines. This data ends up in Telegram channels and underground
+                forums, often indexed by email or domain.</p>
+
+            <p>I built an automated pipeline that continuously scrapes stealer log dumps from Telegram groups,
+                parses the structured data, and indexes it into a PostgreSQL database on my AWS infrastructure:</p>
+
+            <div class="code-window">
+                <div class="code-titlebar">
+                    <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                    <span class="filename">log_pipeline.py</span>
+                </div>
+<pre><code><span class="kw">class</span> <span class="type">StealerLogParser</span>:
+    <span class="kw">def</span> <span class="fn">parse_entry</span>(<span class="def">self</span>, raw_log):
+        <span class="cm"># Standard stealer log format:</span>
+        <span class="cm"># URL | Username/Email | Password | IP | Timestamp</span>
+        <span class="kw">return</span> {
+            <span class="str">"url"</span>:       <span class="def">self</span>.<span class="fn">extract_url</span>(raw_log),
+            <span class="str">"email"</span>:     <span class="def">self</span>.<span class="fn">extract_credential</span>(raw_log),
+            <span class="str">"password"</span>:  <span class="def">self</span>.<span class="fn">extract_password</span>(raw_log),
+            <span class="str">"ip"</span>:        <span class="def">self</span>.<span class="fn">extract_ip</span>(raw_log),
+            <span class="str">"hwid"</span>:      <span class="def">self</span>.<span class="fn">extract_hwid</span>(raw_log),
+            <span class="str">"timestamp"</span>: <span class="def">self</span>.<span class="fn">extract_date</span>(raw_log),
+        }
+
+<span class="kw">class</span> <span class="type">TelegramScraper</span>:
+    <span class="kw">def</span> <span class="fn">monitor_channels</span>(<span class="def">self</span>):
+        <span class="cm"># Continuous monitoring of 50+ stealer log channels</span>
+        <span class="cm"># New dumps are parsed and indexed within minutes</span>
+        <span class="kw">for</span> msg <span class="kw">in</span> <span class="def">self</span>.client.<span class="fn">iter_messages</span>(channel):
+            <span class="kw">if</span> <span class="def">self</span>.<span class="fn">is_log_dump</span>(msg):
+                entries = <span class="def">self</span>.parser.<span class="fn">parse_bulk</span>(msg.file)
+                <span class="def">self</span>.db.<span class="fn">bulk_insert</span>(entries)</code></pre>
+            </div>
+
+            <p>The AI agent connects to this database and cross-references any discovered email or username
+                against the indexed logs. A single email match can yield:</p>
+
+            <ul>
+                <li><strong>IP addresses</strong> &mdash; from the infected machine, often a residential IP that
+                    geolocates to a city or neighborhood</li>
+                <li><strong>Saved credentials</strong> &mdash; revealing other services the target uses, often
+                    with reused passwords that confirm account ownership</li>
+                <li><strong>Autofill data</strong> &mdash; sometimes includes full names, phone numbers, and
+                    physical addresses from form autofill</li>
+                <li><strong>Hardware IDs</strong> &mdash; unique machine fingerprints that can link multiple
+                    accounts to the same physical device</li>
+            </ul>
+
+            <p>In this investigation, stealer log data provided the target's <strong>residential IP address</strong>,
+                which geolocated to a specific city in northern Mexico. This single data point narrowed the
+                government record search from 32 states to a single municipality.</p>
+
+            <h2>Phase 3: Government Record Correlation</h2>
+
+            <p>Mexico's identity system revolves around two interconnected identifiers: the <strong>CURP</strong>
+                (Clave &Uacute;nica de Registro de Poblaci&oacute;n) and the <strong>RFC</strong> (Registro Federal de
+                Contribuyentes). The critical insight is that the first 10 characters of both are identical
+                for any given person &mdash; they encode the same name and birthdate.</p>
+
+            <div class="code-window">
+                <div class="code-titlebar">
+                    <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                    <span class="filename">CURP / RFC structure</span>
+                </div>
+<pre><code><span class="cm">CURP (18 chars):  XXXX000000HCLLRNA3</span>
+<span class="cm">RFC  (13 chars):  XXXX0000003Q6</span>
+<span class="cm">                  ^^^^^^^^^^</span>
+<span class="cm">                  First 10 chars are IDENTICAL</span>
+<span class="cm">                  = surname initials + birthdate</span>
+
+<span class="cm">Given an RFC from financial records:</span>
+<span class="cm">  → Extract first 10 characters</span>
+<span class="cm">  → Search voter registration database for matching CURP prefix</span>
+<span class="cm">  → Confirmed identity link with zero ambiguity</span></code></pre>
+            </div>
+
+            <p>Once the CURP is confirmed, the voter registration record provides the registered address, birth
+                state, and electoral section. The electoral section (<code>secci&oacute;n</code>) is particularly
+                valuable &mdash; it maps to a specific geographic area of a few city blocks. Two people sharing
+                the same section number are confirmed neighbors.</p>
+
+            <h3>Family Network Reconstruction</h3>
+
+            <p>Mexican naming conventions make family mapping deterministic. Children carry their father's
+                first surname (<code>paterno</code>) as their own paterno, and their mother's first surname
+                as their <code>materno</code>. This means:</p>
+
+            <ul>
+                <li>Search <code>SURNAME_A</code> as <strong>paterno</strong> &rarr; finds the subject + siblings +
+                    father's relatives</li>
+                <li>Search <code>SURNAME_A</code> as <strong>materno</strong> &rarr; finds children of women from
+                    that family who married out</li>
+                <li>Search <code>SURNAME_B</code> (mother's line) as <strong>paterno</strong> &rarr; finds maternal
+                    uncle's families</li>
+                <li>Cross-reference addresses &rarr; confirms which family members live together</li>
+            </ul>
+
+            <p>In this investigation, starting from a single confirmed name, I reconstructed a three-generation
+                family tree spanning two cities &mdash; parents, siblings, extended family &mdash; with confirmed
+                addresses for each household.</p>
+
+            <div class="code-window terminal">
+                <div class="code-titlebar">
+                    <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                    <span class="filename">family network reconstruction</span>
+                </div>
+<pre><code><span class="cm"># INE database search — surname as paterno</span>
+<span class="prompt">$</span> <span class="cmd">findstr /I "SURNAME_A" "state_voter_registry.csv"</span>
+<span class="out">  → 47 results in target state</span>
+<span class="out">  → 6 share the same electoral section (confirmed family cluster)</span>
+
+<span class="cm"># Cross-reference: same address, different surnames</span>
+<span class="prompt">$</span> <span class="cmd">findstr /I "TARGET_STREET.*325" "state_voter_registry.csv"</span>
+<span class="out">  → 4 residents at address</span>
+<span class="out">  → 3 share paterno (siblings)</span>
+<span class="out">  → 1 different surname (spouse, confirmed via materno match)</span>
+
+<span class="cm"># Result: complete household composition from public records</span></code></pre>
+            </div>
+
+            <h2>Phase 4: Social Media Deep Dive</h2>
+
+            <p>Standard OSINT tools find social media accounts. The next level is extracting <strong>every
+                post, comment, and interaction</strong> from those accounts &mdash; including content the user
+                considers buried in their history.</p>
+
+            <p>I built a search engine that leverages Facebook's own API endpoints embedded in URL parameters
+                to query any public profile's complete post history. Unlike Facebook's native search (which is
+                deliberately limited), this approach can surface posts from years ago using keyword filters:</p>
+
+            <div class="code-window terminal">
+                <div class="code-titlebar">
+                    <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                    <span class="filename">Facebook deep search</span>
+                </div>
+<pre><code><span class="cm"># Search target's entire post history for vehicle-related content</span>
+<span class="prompt">query:</span> <span class="cmd">"carro" OR "vendo" OR "problema" OR "mec&aacute;nico"</span>
+<span class="out">  → Post from 2023: asking about transmission issues on [vehicle model]</span>
+<span class="out">  → Marketplace listing: selling parts for [specific car]</span>
+<span class="out">  → Photo post: vehicle parked in front of residential building</span>
+
+<span class="cm"># The marketplace listing confirmed vehicle make/model/year</span>
+<span class="cm"># The photo post provided the IMINT pivot for geolocation</span></code></pre>
+            </div>
+
+            <p>In this case, the target had posted about mechanical issues with a specific vehicle, listed
+                car parts on Facebook Marketplace (which exposes the seller's profile even on "anonymous"
+                listings), and uploaded a photo that incidentally showed a residential building behind the
+                vehicle. That photo became the key to physical confirmation.</p>
+
+            <h2>Phase 5: IMINT &mdash; Geolocating a House from a Car Photo</h2>
+
+            <p>The target posted a photo of their vehicle parked in a residential area. The car was the
+                subject of the photo, but the <strong>background</strong> contained enough architectural and
+                geographic detail to pinpoint the exact location.</p>
+
+            <p>The methodology:</p>
+
+            <ol>
+                <li><strong>Architectural analysis</strong> &mdash; the building style (concrete block, specific
+                    window patterns, carport design) is consistent with low-cost housing developments
+                    (<em>fraccionamientos populares</em>) common in northern Mexican cities</li>
+                <li><strong>Known city from prior intelligence</strong> &mdash; stealer log IP + voter registration
+                    had already confirmed the city. This narrowed the search from "anywhere in Mexico" to a
+                    specific municipality</li>
+                <li><strong>Overpass Turbo query</strong> &mdash; using OpenStreetMap data to identify residential
+                    developments matching the architectural pattern in the target city</li>
+                <li><strong>Google Earth confirmation</strong> &mdash; street-level imagery matched the building
+                    facade, carport angle, and surrounding structures visible in the target's photo</li>
+            </ol>
+
+            <div class="code-window">
+                <div class="code-titlebar">
+                    <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                    <span class="filename">overpass query</span>
+                </div>
+<pre><code><span class="cm">// Overpass Turbo — find residential developments in target area</span>
+[<span class="str">out:json</span>][<span class="str">timeout:60</span>];
+(
+  <span class="kw">way</span>[<span class="str">"landuse"</span>=<span class="str">"residential"</span>]
+     (<span class="num">25.50</span>,<span class="num">-101.10</span>,<span class="num">25.60</span>,<span class="num">-100.90</span>);
+  <span class="kw">way</span>[<span class="str">"building"</span>=<span class="str">"apartments"</span>]
+     (<span class="num">25.50</span>,<span class="num">-101.10</span>,<span class="num">25.60</span>,<span class="num">-100.90</span>);
+);
+<span class="kw">out</span> body;
+&gt;;
+<span class="kw">out</span> skel qt;</code></pre>
+            </div>
+
+            <p>The satellite imagery confirmed the match &mdash; the building facade, the parking layout, and
+                even the street-level details were consistent with the incidental background in the target's
+                photo. This converted a social media post into a <strong>confirmed physical address</strong>,
+                independently validating the voter registration data.</p>
+
+            <h2>The Complete Pipeline</h2>
+
+            <p>From seed data (a single username) to a complete intelligence profile, the investigation
+                followed this correlation chain:</p>
+
+            <div class="code-window">
+                <div class="code-titlebar">
+                    <div class="dots"><span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span></div>
+                    <span class="filename">intelligence pipeline</span>
+                </div>
+<pre><code><span class="str">Username</span> (seed)
+  <span class="cm">│</span>
+  <span class="cm">├──</span> <span class="fn">Enumeration Engine</span> <span class="cm">→ 25+ service registrations confirmed</span>
+  <span class="cm">│     ├──</span> Email addresses (primary + secondary)
+  <span class="cm">│     ├──</span> Phone number
+  <span class="cm">│     └──</span> Linked social media accounts
+  <span class="cm">│</span>
+  <span class="cm">├──</span> <span class="fn">Stealer Log Correlation</span> <span class="cm">→ IP address + saved credentials</span>
+  <span class="cm">│     ├──</span> Residential IP → city-level geolocation
+  <span class="cm">│     ├──</span> Additional accounts from saved passwords
+  <span class="cm">│     └──</span> Associated IPs on same network (family members)
+  <span class="cm">│</span>
+  <span class="cm">├──</span> <span class="fn">Government Records</span> <span class="cm">→ CURP / RFC / voter registration</span>
+  <span class="cm">│     ├──</span> Full legal name + DOB
+  <span class="cm">│     ├──</span> Registered address
+  <span class="cm">│     ├──</span> Electoral section (precise neighborhood)
+  <span class="cm">│     └──</span> Family tree (3 generations, 2 cities)
+  <span class="cm">│</span>
+  <span class="cm">├──</span> <span class="fn">Social Media Deep Dive</span> <span class="cm">→ vehicle ID + incidental photos</span>
+  <span class="cm">│     ├──</span> Vehicle make/model/year from marketplace
+  <span class="cm">│     ├──</span> Mechanical posts confirming ownership
+  <span class="cm">│     └──</span> Photo with residential building in background
+  <span class="cm">│</span>
+  <span class="cm">└──</span> <span class="fn">IMINT Confirmation</span> <span class="cm">→ physical address validated</span>
+        <span class="cm">├──</span> Architectural analysis → housing development type
+        <span class="cm">├──</span> Overpass Turbo → candidate locations
+        <span class="cm">└──</span> Google Earth → exact building match confirmed</code></pre>
+            </div>
+
+            <p>The final product was a complete intelligence profile: full identity, family network across
+                multiple households, vehicle registrations, 30+ online accounts, confirmed physical address
+                with satellite imagery, and a digital footprint spanning a decade of online activity.</p>
+
+            <h2>Lessons for Defenders</h2>
+
+            <p>This investigation highlights several operational security failures that are endemic across
+                Latin America:</p>
+
+            <ul>
+                <li><strong>Username reuse</strong> &mdash; using the same handle across gaming, social media,
+                    and messaging platforms creates a single pivot point for enumeration</li>
+                <li><strong>Mobile app API exposure</strong> &mdash; services that protect their web APIs but
+                    ship mobile apps with unprotected endpoints are giving away data they think is secured</li>
+                <li><strong>Incidental background data</strong> &mdash; photos taken for one purpose (showing a
+                    car) often contain enough background detail (architecture, street features, vegetation) to
+                    geolocate the photographer</li>
+                <li><strong>Government record linkage</strong> &mdash; the CURP/RFC shared prefix makes cross-referencing
+                    trivial. Combined with predictable naming conventions, a single confirmed identity expands
+                    to an entire family network</li>
+                <li><strong>Stealer log persistence</strong> &mdash; compromised credentials circulate for years.
+                    Even if passwords are changed, the associated metadata (IPs, hardware IDs, autofill data)
+                    remains intelligence-grade</li>
+            </ul>
+
+            <p><strong>The tooling described in this post is proprietary.</strong> The enumeration engine,
+                stealer log pipeline, and correlation framework are available under commercial license for
+                authorized intelligence engagements.</p>
+
+        </article>
+
+        <footer>
+            <div class="footer-content">
+                <img src="./Image/Logo.jpg" alt="Logo" class="footer-logo">
+                <p class="copyright">&copy; 2024-2026 ALL RIGHTS RESERVED.</p>
+            </div>
+        </footer>
+    </main>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init();
+    </script>
+    <script type="module" src="/main.js"></script>
+</body>
+
+</html>
